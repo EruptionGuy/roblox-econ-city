@@ -1,0 +1,520 @@
+<title>Thị Trưởng EconCity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Serif:wght@700&display=swap">
+<style>
+/* Bố cục: một màn hình chơi, trái là thành phố (báo, dân), phải là bàn làm việc của thị trưởng (chính sách, mục tiêu, nút qua tháng). */
+:root {
+  --bg: #e8eef5; --surface: #ffffff; --sunk: #f2f5f9; --ink: #14233a; --muted: #5a6a80; --line: #d4dde8;
+  --accent: #f07d19; --accent-ink: #ffffff; --accent-deep: #b85a08;
+  --good: #1d8f4e; --warn: #c98a00; --bad: #d1433f; --paper: #fbf6ea; --paper-ink: #2a2116;
+  --f-display: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --f-body: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-news: "Noto Serif", Georgia, "Times New Roman", serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1625; --surface: #172236; --sunk: #121c2d; --ink: #e6edf7; --muted: #95a6bd; --line: #2a3a54;
+  --accent: #ff9638; --accent-ink: #1a0f02; --accent-deep: #c96a10;
+  --good: #3fc07a; --warn: #f0b429; --bad: #ff6b66; --paper: #241f17; --paper-ink: #f1e6cf; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1625; --surface: #172236; --sunk: #121c2d; --ink: #e6edf7; --muted: #95a6bd; --line: #2a3a54;
+  --accent: #ff9638; --accent-ink: #1a0f02; --accent-deep: #c96a10;
+  --good: #3fc07a; --warn: #f0b429; --bad: #ff6b66; --paper: #241f17; --paper-ink: #f1e6cf; color-scheme: dark }
+
+* { box-sizing: border-box }
+html, body { height: 100% }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 14px 96px; }
+h1, h2, h3 { font-family: var(--f-display); line-height: 1.1; margin: 0; text-wrap: balance }
+button { font: inherit; color: inherit; cursor: pointer }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px }
+.num { font-variant-numeric: tabular-nums }
+.muted { color: var(--muted) }
+.good { color: var(--good) } .bad { color: var(--bad) } .warn { color: var(--warn) }
+
+/* Nút kiểu đồ chơi: bóng đặc phía dưới, ấn xuống thì lún */
+.btn { border: 0; border-radius: 12px; padding: 10px 16px; font-weight: 700; background: var(--sunk); box-shadow: 0 3px 0 var(--line); transition: transform .06s, box-shadow .06s }
+.btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--line) }
+.btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 4px 0 var(--accent-deep); font-family: var(--f-display); font-size: 18px; padding: 10px 22px }
+.btn-primary:active { box-shadow: 0 0 0 var(--accent-deep); transform: translateY(4px) }
+.btn[disabled] { opacity: .45; cursor: not-allowed }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px }
+.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap }
+.brand h1 { font-size: 26px; font-weight: 800 }
+.tag { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-deep); background: color-mix(in srgb, var(--accent) 16%, transparent); padding: 2px 8px; border-radius: 99px }
+:root[data-theme="dark"] .tag { color: var(--accent) }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag { color: var(--accent) } }
+.linkbtn { background: none; border: 0; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; padding: 4px }
+
+/* ---------- Chọn thành phố ---------- */
+.intro { display: grid; gap: 18px }
+.about { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 18px }
+.about summary { font-weight: 700; cursor: pointer }
+.about ul { margin: 8px 0 0; padding-left: 20px } .about li { margin: 4px 0 }
+.cities { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px }
+.city { background: var(--surface); border: 2px solid var(--line); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 10px; min-width: 0 }
+.city.locked { opacity: .6 }
+.city h2 { font-size: 24px }
+.city .starsRow { font-size: 26px; letter-spacing: 2px; line-height: 1 }
+.star { color: var(--line) } .star.on { color: var(--accent) }
+.city .goals { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13.5px }
+.city .btn { align-self: flex-start; margin-top: auto }
+.skyline { height: 64px; border-radius: 10px; background: var(--sunk); overflow: hidden }
+
+/* ---------- Màn chơi ---------- */
+.stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; min-width: 0 }
+.stat .k { font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted) }
+.stat .v { font-family: var(--f-display); font-size: 22px; font-weight: 800; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.stat .d { font-size: 12.5px; font-weight: 600; min-height: 1.2em }
+.pips { display: flex; gap: 3px; margin-top: 6px } .pip { flex: 1; height: 6px; border-radius: 3px; background: var(--line) } .pip.done { background: var(--accent) }
+.flash { animation: flash 1s ease-out }
+@keyframes flash { from { background: color-mix(in srgb, var(--accent) 30%, var(--surface)) } }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 16px; align-items: start }
+.col { display: grid; gap: 14px; min-width: 0 }
+
+.paper { background: var(--paper); color: var(--paper-ink); border-radius: 6px; padding: 14px 18px 16px; box-shadow: 0 1px 0 var(--line), 0 6px 18px -10px rgb(0 0 0 / .35); transform: rotate(-.4deg) }
+.paper .mast { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; border-bottom: 2px solid currentColor; padding-bottom: 6px; opacity: .85 }
+.paper h2 { font-family: var(--f-news); font-size: clamp(20px, 2.6vw, 27px); font-weight: 700; margin-top: 10px; line-height: 1.2 }
+.paper p { margin: 8px 0 0; font-size: 14px; opacity: .85 }
+
+.groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px }
+.grp { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 4px 10px; position: relative }
+.grp.strike { border-color: var(--bad); box-shadow: inset 0 0 0 1px var(--bad) }
+.grp .face { grid-row: span 2 }
+.grp h3 { font-size: 18px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap }
+.grp h3 small { font-family: var(--f-body); font-size: 12.5px; font-weight: 500; color: var(--muted) }
+.badge { font-family: var(--f-body); font-size: 10.5px; font-weight: 800; letter-spacing: .06em; color: #fff; background: var(--bad); border-radius: 99px; padding: 1px 7px }
+.meter { font-size: 12px; color: var(--muted); display: grid; gap: 4px }
+.bar { height: 7px; border-radius: 4px; background: var(--sunk); position: relative; overflow: visible }
+.bar > i { position: absolute; inset: 0 auto 0 0; border-radius: 4px }
+.bar > b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--bad) }
+.bubble { grid-column: 1 / -1; margin-top: 6px; background: var(--sunk); border-radius: 10px; padding: 7px 10px; font-size: 13.5px; position: relative }
+.bubble::before { content: ""; position: absolute; top: -6px; left: 20px; border: 6px solid transparent; border-top: 0; border-bottom-color: var(--sunk) }
+
+.active { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px }
+.active h3, .panel h3 { font-size: 17px; margin-bottom: 8px }
+.chips { display: flex; flex-wrap: wrap; gap: 8px }
+.chip { background: var(--sunk); border-radius: 10px; padding: 6px 10px; font-size: 13px; min-width: 0 }
+.chip strong { display: block; font-size: 13.5px }
+.log { margin: 0; padding-left: 18px; font-size: 13.5px; color: var(--muted) } .log li { margin: 3px 0 }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px }
+.tabs { display: flex; gap: 6px; margin-bottom: 12px; background: var(--sunk); border-radius: 12px; padding: 4px }
+.tabs button { flex: 1; border: 0; background: none; border-radius: 9px; padding: 7px 4px; font-weight: 700; color: var(--muted) }
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 0 var(--line) }
+.field { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 8px 0; border-top: 1px solid var(--line) }
+.field:first-child { border-top: 0 }
+.field label { font-weight: 600 } .field .who { font-size: 12px; color: var(--muted); grid-column: 1 }
+.field .val { font-family: var(--f-display); font-size: 19px; font-weight: 800; text-align: right; grid-row: span 2; align-self: center }
+.field input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent) }
+.field.danger .val { color: var(--bad) }
+.stepper { display: flex; align-items: center; gap: 8px; grid-row: span 2; align-self: center }
+.stepper button { width: 34px; height: 34px; border-radius: 10px; border: 0; background: var(--sunk); box-shadow: 0 3px 0 var(--line); font-weight: 800; font-size: 18px }
+.stepper button:active { transform: translateY(3px); box-shadow: none }
+.lv { display: flex; gap: 3px } .lv i { width: 9px; height: 16px; border-radius: 3px; background: var(--line) } .lv i.on { background: var(--accent) }
+.cost { font-size: 12px; color: var(--muted); grid-column: 1 }
+
+.forecast { margin-top: 12px; background: var(--sunk); border-radius: 12px; padding: 10px 12px; display: grid; gap: 4px; font-size: 14px }
+.forecast .row { display: flex; justify-content: space-between; gap: 10px }
+.forecast .big { font-family: var(--f-display); font-size: 20px; font-weight: 800 }
+
+.goalsBox ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px }
+.goalsBox li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; font-size: 14px }
+.goalsBox li .s { font-size: 20px; line-height: 1 }
+.goalsBox li small { display: block; color: var(--muted) }
+
+.dock { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(6px); border-top: 1px solid var(--line); z-index: 5 }
+.dock .in { max-width: 1180px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 12px }
+.dock .hint { font-size: 13.5px; color: var(--muted); min-width: 0 }
+
+/* ---------- Thẻ sự kiện ---------- */
+.overlay { position: fixed; inset: 0; background: rgb(8 14 26 / .55); display: grid; place-items: center; padding: 16px; z-index: 10; overflow-y: auto }
+.card { background: var(--surface); border-radius: 22px; max-width: 520px; width: 100%; padding: 22px; box-shadow: 0 20px 60px -20px rgb(0 0 0 / .6); animation: pop .25s ease-out }
+@keyframes pop { from { transform: translateY(14px) scale(.97); opacity: 0 } }
+.card .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-deep) }
+:root[data-theme="dark"] .card .eyebrow { color: var(--accent) }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .card .eyebrow { color: var(--accent) } }
+.card.crisis .eyebrow { color: var(--bad) }
+.card h2 { font-size: 28px; margin: 4px 0 8px }
+.card p { margin: 0 0 14px }
+.choices { display: grid; gap: 10px }
+.choice { text-align: left; border: 2px solid var(--line); background: var(--sunk); border-radius: 14px; padding: 10px 14px; box-shadow: 0 3px 0 var(--line) }
+.choice:hover { border-color: var(--accent) }
+.choice:active { transform: translateY(3px); box-shadow: none }
+.choice strong { display: block; font-size: 16px }
+.choice span { font-size: 13px; color: var(--muted) }
+.result { font-size: 17px; font-weight: 600; margin: 6px 0 14px }
+.luck { display: inline-block; font-weight: 800; font-family: var(--f-display); font-size: 15px; padding: 2px 10px; border-radius: 99px; margin-bottom: 8px; color: #fff }
+.luck.win { background: var(--good) } .luck.lose { background: var(--bad) }
+
+/* ---------- Kết thúc ---------- */
+.end { max-width: 640px; margin: 0 auto; text-align: center; display: grid; gap: 14px; padding-top: 10px }
+.end .bigstars { font-size: 56px; letter-spacing: 6px; line-height: 1 }
+.end h2 { font-size: 34px }
+.end .goalsBox { text-align: left }
+.end .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap }
+.spark { width: 100%; height: 120px; display: block }
+.legend { display: flex; gap: 16px; justify-content: center; font-size: 13px; color: var(--muted) }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr) }
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)) }
+}
+@media (max-width: 480px) {
+  .groups { grid-template-columns: minmax(0, 1fr) }
+  .stat .v { font-size: 19px }
+  .dock .hint { display: none }
+  .dock .in { justify-content: center } .dock .btn-primary { width: 100% }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important } }
+</style>
+
+<div class="wrap" id="app"></div>
+<div class="overlay" id="overlay" hidden></div>
+
+<script src="engine.js"></script>
+<script>
+// vỏ UI, bỏ đi được. luật chơi nằm hết trong engine.js
+const E = window.EconProto;
+const $ = (sel, el = document) => el.querySelector(sel);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const money = E.money;
+const pct = (x) => `${(x * 100).toFixed(0)}%`;
+const signed = (x, f = money) => (x > 0 ? "+" : x < 0 ? "-" : "±") + f(Math.abs(x)).replace("-", "");
+const TABS = [["tax", "Thuế"], ["subsidy", "Trợ cấp"], ["infra", "Hạ tầng"]];
+const GROUP_COLOR = { FARMER: "#5aa64b", WORKER: "#3a7bd5", INTELLECTUAL: "#8a5cd6", OWNER: "#d68a2c" };
+
+// ---- tiến độ mở khoá, chỉ lưu localStorage trên máy người chơi ----
+function loadProgress() { try { return JSON.parse(localStorage.getItem("econ-proto-A") || "{}") } catch { return {} } }
+function saveProgress(p) { try { localStorage.setItem("econ-proto-A", JSON.stringify(p)) } catch {} }
+let progress = loadProgress(); // { binhyen: 2, ... } số sao cao nhất
+const unlocked = (i) => i === 0 || progress.all || (progress[E.CITIES[i - 1].id] || 0) >= 1;
+
+// ---- state màn hình ----
+let ui = { screen: "cities", tab: "tax", s: null, prev: null, tick: null, news: null, quotes: {}, card: null, result: null, flash: false };
+
+function start(saved) {
+  if (saved && saved.ui) ui = saved.ui;
+  render();
+}
+start();
+
+function newGame(cityId) {
+  const s = E.newSession(cityId);
+  const city = E.CITY_BY_ID[cityId];
+  ui = { ...ui, screen: "game", s, prev: null, tick: null, tab: "tax", result: null, flash: false,
+    news: { headline: `Thị trưởng mới nhậm chức ở ${city.name}`, sub: city.brief },
+    card: { brief: true, title: city.name, text: city.brief } };
+  refreshQuotes();
+  render();
+}
+
+function refreshQuotes() { for (const g of ui.s.groups) ui.quotes[g.type] = E.quote(ui.s, g) }
+
+function endMonth() {
+  const s = ui.s;
+  ui.prev = { budget: s.budget, happiness: s.happiness, inflation: s.inflation, population: s.population, gdp: s.gdp, striking: s.groups.filter((g) => g.striking).map((g) => g.type) };
+  const lastLog = s.log.filter((l) => l.month === s.month + 1).pop();
+  ui.tick = E.processTick(s);
+  ui.news = { headline: E.headline(s, ui.prev, ui.tick), sub: lastLog ? `${lastLog.title}: ${lastLog.text}` : "" };
+  refreshQuotes();
+  ui.flash = true;
+  if (s.status !== "ACTIVE") {
+    const st = E.stars(s);
+    if (st > (progress[s.city] || 0)) { progress[s.city] = st; saveProgress(progress) }
+    ui.screen = "end";
+  } else {
+    const id = E.pickEvent(s);
+    ui.card = id ? E.eventCard(s, id) : null;
+    ui.result = null;
+  }
+  render();
+}
+
+function choose(i) {
+  ui.result = E.resolveChoice(ui.s, ui.card, i);
+  refreshQuotes();
+  render();
+}
+function closeCard() { ui.card = null; ui.result = null; render() }
+
+function setPolicy(key, value) {
+  ui.s.policy[key] = value;
+  ui.flash = false;
+  renderGameParts();
+}
+
+// ---- vẽ ----
+function render() {
+  const app = $("#app");
+  if (ui.screen === "cities") app.innerHTML = citiesView();
+  else if (ui.screen === "game") app.innerHTML = gameView();
+  else app.innerHTML = endView();
+  renderCard();
+  document.querySelectorAll("canvas.skyline").forEach(drawSkyline);
+  ui.flash = false;
+}
+function renderGameParts() { // lúc kéo slider: cập nhật số, không vẽ lại slider để khỏi mất focus
+  $("#stats").innerHTML = statsView();
+  $("#forecast").innerHTML = forecastView();
+  $("#goals").innerHTML = goalsList(ui.s, true);
+  $("#dockHint").innerHTML = dockHint();
+  for (const f of E.POLICY_FIELDS) {
+    const el = document.getElementById("v-" + f.key);
+    if (el) el.textContent = fmtField(f, ui.s.policy[f.key]);
+    const row = document.getElementById("row-" + f.key);
+    if (row && f.danger) row.classList.toggle("danger", ui.s.policy[f.key] >= f.danger);
+  }
+  if (ui.tab === "infra") $("#fields").innerHTML = fieldsView();
+}
+
+function header(extra = "") {
+  return `<div class="topbar"><div class="brand"><h1>Thị Trưởng EconCity</h1><span class="tag">Bản thử vòng chơi A</span></div>${extra}</div>`;
+}
+
+function starRow(n, total = 3) { return Array.from({ length: total }, (_, i) => `<span class="star ${i < n ? "on" : ""}" aria-hidden="true">★</span>`).join("") }
+
+function citiesView() {
+  return `${header(`<button class="linkbtn" onclick="progress={all:true,...progress};saveProgress(progress);render()">Mở khoá hết (cho người thử)</button>`)}
+  <div class="intro">
+    <details class="about" ${progress.seenAbout ? "" : "open"} ontoggle="progress.seenAbout=true;saveProgress(progress)">
+      <summary>Bản thử này để làm gì?</summary>
+      <p>Muốn xem: nếu mỗi tháng người chơi phải ra một quyết định khó, đọc báo, nghe dân than phiền và cố lấy đủ 3 sao, thì Econ City có vui hơn kiểu "chỉnh xong rồi ngồi chờ" không.</p>
+      <ul>
+        <li>Công thức kinh tế chép từ code Roblox hồi đó (thuế, năng suất, hạnh phúc, đình công, lạm phát, dân số).</li>
+        <li>Thêm thẻ sự kiện mỗi tháng, báo đầu tháng, lời dân, dự báo trước khi bấm, 3 sao, 3 thành phố mở khoá dần.</li>
+        <li>Nâng cấp hạ tầng tốn tiền xây (cấp L = $2.500 x L), trợ cấp tốn gấp 4. Bản Roblox hồi đó cứ đặt mọi thứ tối đa từ tháng 1 là thắng.</li>
+        <li>Chơi theo lượt: bấm "Kết thúc tháng" thay vì chờ 20 giây.</li>
+      </ul>
+      <p class="muted">Chơi xong thử nghĩ xem: có muốn chơi lại để lấy thêm sao không, có thẻ nào làm mình phân vân thật không, có lúc nào thấy chán không.</p>
+    </details>
+    <div class="cities">${E.CITIES.map((c, i) => {
+      const ok = unlocked(i), st = progress[c.id] || 0;
+      return `<article class="city ${ok ? "" : "locked"}">
+        <canvas class="skyline" data-seed="${i}" aria-hidden="true"></canvas>
+        <div class="starsRow" aria-label="${st} trên 3 sao">${starRow(st)}</div>
+        <h2>${esc(c.name)}</h2>
+        <p class="muted" style="margin:0">${esc(c.blurb)}</p>
+        <ul class="goals">${c.goals.map((g) => `<li>${esc(g.label)}</li>`).join("")}</ul>
+        <button class="btn ${ok ? "btn-primary" : ""}" ${ok ? "" : "disabled"} onclick="newGame('${c.id}')">${ok ? (st ? "Chơi lại" : "Nhậm chức") : `Cần 1 sao ở ${esc(E.CITIES[i - 1].name)}`}</button>
+      </article>`;
+    }).join("")}</div>
+  </div>`;
+}
+
+function statsView() {
+  const s = ui.s, p = ui.prev, f = ui.flash ? "flash" : "";
+  const d = (cur, prev, fmt, goodUp = true) => {
+    if (!p) return "";
+    const x = cur - prev;
+    if (Math.abs(x) < 0.05) return `<span class="muted">không đổi</span>`;
+    return `<span class="${(x > 0) === goodUp ? "good" : "bad"}">${x > 0 ? "▲" : "▼"} ${fmt(Math.abs(x))}</span>`;
+  };
+  const debt = E.debt(s);
+  return `
+    <div class="stat ${f}"><div class="k">Tháng</div><div class="v num">${Math.min(s.month + 1, 12)} / 12</div><div class="pips">${Array.from({ length: 12 }, (_, i) => `<span class="pip ${i < s.month ? "done" : ""}"></span>`).join("")}</div></div>
+    <div class="stat ${f}"><div class="k">Ngân sách</div><div class="v num ${s.budget < 0 ? "bad" : ""}">${money(s.budget)}</div><div class="d num">${p ? d(s.budget, p.budget, money) : `<span class="muted">phá sản dưới -$5.000</span>`}${debt ? ` <span class="warn">- nợ ${money(debt)}</span>` : ""}</div></div>
+    <div class="stat ${f}"><div class="k">Hạnh phúc</div><div class="v num">${s.happiness.toFixed(0)}</div><div class="d num">${d(s.happiness, p?.happiness, (x) => x.toFixed(1))}</div></div>
+    <div class="stat ${f}"><div class="k">Lạm phát</div><div class="v num ${s.inflation > 0.1 ? "bad" : ""}">${(s.inflation * 100).toFixed(1)}%</div><div class="d num">${d(s.inflation * 100, (p?.inflation ?? 0) * 100, (x) => x.toFixed(1) + "%", false)}</div></div>
+    <div class="stat ${f}"><div class="k">Dân số</div><div class="v num">${s.population}</div><div class="d num">${d(s.population, p?.population, (x) => x.toFixed(0))}</div></div>
+    <div class="stat ${f}"><div class="k">GDP</div><div class="v num">${s.gdp ? money(s.gdp) : "—"}</div><div class="d num">${p && p.gdp ? d(s.gdp, p.gdp, money) : ""}</div></div>`;
+}
+
+function face(h, striking, color) {
+  const mood = Math.max(-1, Math.min(1, (h - 50) / 25)); // -1 buồn, 1 vui
+  const mouthY = 34, curve = mood * 7;
+  const skin = striking ? "var(--bad)" : color;
+  return `<svg class="face" viewBox="0 0 52 52" width="52" height="52" aria-hidden="true">
+    <circle cx="26" cy="26" r="24" fill="${skin}"/>
+    <circle cx="18" cy="21" r="3.2" fill="#fff"/><circle cx="34" cy="21" r="3.2" fill="#fff"/>
+    <circle cx="18" cy="21.6" r="1.6" fill="#14233a"/><circle cx="34" cy="21.6" r="1.6" fill="#14233a"/>
+    ${striking ? `<path d="M12 14 L22 17 M40 14 L30 17" stroke="#14233a" stroke-width="2.4" stroke-linecap="round"/>` : ""}
+    <path d="M16 ${mouthY} Q26 ${mouthY + curve * 1.6} 36 ${mouthY}" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function groupsView() {
+  return ui.s.groups.map((g) => {
+    const d = E.GROUPS[g.type];
+    const hc = g.happiness >= 60 ? "var(--good)" : g.happiness >= 40 ? "var(--warn)" : "var(--bad)";
+    return `<div class="grp ${g.striking ? "strike" : ""}">
+      ${face(g.happiness, g.striking, GROUP_COLOR[g.type])}
+      <h3>${d.label} <small class="num">${g.population} người</small> ${g.striking ? `<span class="badge">ĐÌNH CÔNG</span>` : ""}</h3>
+      <div class="meter">
+        <span class="num">Hạnh phúc ${g.happiness.toFixed(0)}</span>
+        <div class="bar"><i style="width:${g.happiness}%;background:${hc}"></i></div>
+        <span class="num">Bất mãn ${g.discontent.toFixed(0)} - đình công khi vượt ${d.strikeThreshold}</span>
+        <div class="bar"><i style="width:${g.discontent}%;background:var(--muted)"></i><b style="left:${d.strikeThreshold}%"></b></div>
+      </div>
+      <div class="bubble">"${esc(ui.quotes[g.type] || "")}"</div>
+    </div>`;
+  }).join("");
+}
+
+function fmtField(f, v) {
+  if (f.kind === "percent") return pct(v);
+  if (f.kind === "money") return v ? money(v) : "Tắt";
+  return `Cấp ${v}`;
+}
+function fieldsView() {
+  const s = ui.s;
+  return E.POLICY_FIELDS.filter((f) => f.tab === ui.tab).map((f) => {
+    const v = s.policy[f.key];
+    if (f.kind === "level") {
+      const built = s.built[f.key] || 0;
+      const next = v + 1 <= built ? "đã xây, lên lại miễn phí" : `lên cấp ${v + 1}: ${money(2500 * (v + 1))}`;
+      return `<div class="field" id="row-${f.key}">
+        <label>${f.label}</label>
+        <div class="stepper"><button aria-label="Hạ cấp ${f.label}" onclick="setPolicy('${f.key}', Math.max(0, ui.s.policy.${f.key} - 1))">-</button>
+          <span class="lv" aria-label="Cấp ${v}">${Array.from({ length: 5 }, (_, i) => `<i class="${i < v ? "on" : ""}"></i>`).join("")}</span>
+          <button aria-label="Nâng cấp ${f.label}" onclick="setPolicy('${f.key}', Math.min(5, ui.s.policy.${f.key} + 1))">+</button></div>
+        <span class="who">${f.who} - bảo trì $50/cấp/tháng</span>
+        <span class="cost">${v >= 5 ? "Đã tối đa" : next}</span>
+      </div>`;
+    }
+    const sub = f.kind === "money" ? ` - thật ra tốn ${money(v * E.CFG.SUBSIDY_COST_MULT)}/tháng` : "";
+    return `<div class="field ${f.danger && v >= f.danger ? "danger" : ""}" id="row-${f.key}">
+      <label for="in-${f.key}">${f.label}</label>
+      <span class="val num" id="v-${f.key}">${fmtField(f, v)}</span>
+      <span class="who">${f.who}${sub}</span>
+      <input id="in-${f.key}" type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${v}" oninput="setPolicy('${f.key}', +this.value); ${f.kind === "money" ? `this.parentNode.querySelector('.who').textContent='${f.who} - thật ra tốn '+E.money(this.value*${E.CFG.SUBSIDY_COST_MULT})+'/tháng'` : ""}">
+    </div>`;
+  }).join("");
+}
+
+function forecastView() {
+  const f = E.forecast(ui.s);
+  const lose = f.status === "FAILED";
+  return `<div class="row"><span>Thu thuế</span><span class="num good">+${money(f.taxRevenue)}</span></div>
+    <div class="row"><span>Chi (quản lý, trợ cấp, bảo trì${f.construction ? ", xây dựng" : ""})</span><span class="num bad">-${money(f.spending).replace("-", "")}</span></div>
+    <div class="row"><span>Ngân sách sau tháng này</span><span class="big num ${f.budget < 0 ? "bad" : ""}">${money(f.budget)} <small class="${f.budgetDelta >= 0 ? "good" : "bad"}">(${signed(f.budgetDelta)})</small></span></div>
+    <div class="row"><span>Hạnh phúc dự kiến</span><span class="num">${f.happiness.toFixed(0)}</span></div>
+    ${f.striking.length ? `<div class="bad">Sẽ đình công: ${f.striking.map((t) => E.GROUPS[t].label).join(", ")}</div>` : ""}
+    ${lose ? `<div class="bad"><strong>Thành phố sẽ phá sản!</strong> Tăng thuế hoặc cắt chi.</div>` : ""}`;
+}
+
+function goalsList(s, live) {
+  const goals = E.CITY_BY_ID[s.city].goals;
+  return `<ul>${goals.map((g, i) => {
+    const ok = i === 0 ? s.status === "ENDED" : g.test(s);
+    const sym = live ? (i === 0 ? `<span class="s star ${s.status === "ENDED" ? "on" : ""}">★</span>` : `<span class="s star ${ok ? "on" : ""}">★</span>`) : `<span class="s star ${ok && s.status === "ENDED" ? "on" : ""}">★</span>`;
+    const liveTxt = live && g.live ? `<small>${esc(g.live(s))}${ok ? " - đang đạt" : ""}</small>` : live && i === 0 ? `<small>còn ${12 - s.month} tháng</small>` : "";
+    return `<li>${sym}<span>${esc(g.label)}${liveTxt}</span></li>`;
+  }).join("")}</ul>`;
+}
+
+function activeView() {
+  const s = ui.s;
+  const chips = s.scenarios.map((a) => `<div class="chip"><strong>${esc(a.name)} <span class="muted num">- còn ${a.durationMonths - a.monthsActive} tháng</span></strong><span class="muted">${esc(E.describeEffects(a.effects))}</span></div>`).join("");
+  const log = s.log.slice(-4).reverse().map((l) => `<li><span class="num">T${l.month}</span> - ${esc(l.title)}: <em>${esc(l.choice)}</em></li>`).join("");
+  return `<div class="active"><h3>Đang diễn ra</h3>${chips ? `<div class="chips">${chips}</div>` : `<p class="muted" style="margin:0">Chưa có sự kiện nào đang tác động.</p>`}
+    ${log ? `<h3 style="margin-top:12px">Quyết định gần đây</h3><ul class="log">${log}</ul>` : ""}</div>`;
+}
+
+function dockHint() {
+  const f = E.forecast(ui.s);
+  if (f.status === "FAILED") return `<span class="bad">Nếu kết thúc tháng bây giờ, thành phố sẽ phá sản.</span>`;
+  return `Sau tháng này: ngân sách <strong class="num">${money(f.budget)}</strong>, hạnh phúc <strong class="num">${f.happiness.toFixed(0)}</strong>`;
+}
+
+function gameView() {
+  const s = ui.s, city = E.CITY_BY_ID[s.city];
+  return `${header(`<button class="linkbtn" onclick="ui.screen='cities';render()">Về chọn thành phố</button>`)}
+  <div class="stats" id="stats">${statsView()}</div>
+  <div class="layout">
+    <div class="col">
+      <article class="paper"><div class="mast"><span>Tin Sáng ${esc(city.name)}</span><span class="num">Số ${s.month + 1}</span></div>
+        <h2>${esc(ui.news.headline)}</h2>${ui.news.sub ? `<p>${esc(ui.news.sub)}</p>` : ""}</article>
+      <div class="groups">${groupsView()}</div>
+      ${activeView()}
+    </div>
+    <div class="col">
+      <section class="panel">
+        <h3>Bàn làm việc của thị trưởng</h3>
+        <div class="tabs" role="tablist">${TABS.map(([k, l]) => `<button role="tab" aria-selected="${ui.tab === k}" onclick="ui.tab='${k}';render()">${l}</button>`).join("")}</div>
+        <div id="fields">${fieldsView()}</div>
+        <div class="forecast" id="forecast">${forecastView()}</div>
+      </section>
+      <section class="panel goalsBox"><h3>3 ngôi sao của ${esc(city.name)}</h3><div id="goals">${goalsList(s, true)}</div></section>
+    </div>
+  </div>
+  <div class="dock"><div class="in"><span class="hint" id="dockHint">${dockHint()}</span>
+    <button class="btn btn-primary" onclick="endMonth()">Kết thúc tháng ${s.month + 1} ▸</button></div></div>`;
+}
+
+function renderCard() {
+  const ov = $("#overlay"), c = ui.card;
+  if (ui.screen !== "game" || !c) { ov.hidden = true; ov.innerHTML = ""; return }
+  ov.hidden = false;
+  if (c.brief) {
+    ov.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="ct"><div class="eyebrow">Ngày đầu nhậm chức</div><h2 id="ct">${esc(c.title)}</h2><p>${esc(c.text)}</p>
+      <p class="muted">Mẹo: kéo thanh thuế và xem ô <strong>dự báo</strong> thay đổi ngay. Mỗi tháng sẽ có một chuyện xảy ra cần bạn quyết định.</p>
+      <button class="btn btn-primary" onclick="closeCard()">Bắt đầu làm việc</button></div>`;
+  } else if (ui.result) {
+    const r = ui.result;
+    ov.innerHTML = `<div class="card ${c.scripted ? "crisis" : ""}" role="dialog" aria-modal="true" aria-labelledby="ct"><div class="eyebrow">Đầu tháng ${ui.s.month + 1}</div><h2 id="ct">${esc(c.title)}</h2>
+      ${r.luck ? `<span class="luck ${r.luck}">${r.luck === "win" ? "May mắn!" : "Xui rồi!"}</span>` : ""}
+      <p class="result">${esc(r.text)}</p><button class="btn btn-primary" onclick="closeCard()">Tiếp tục</button></div>`;
+  } else {
+    ov.innerHTML = `<div class="card ${c.scripted ? "crisis" : ""}" role="dialog" aria-modal="true" aria-labelledby="ct"><div class="eyebrow">${c.scripted ? "Khủng hoảng" : "Đầu tháng " + (ui.s.month + 1)}</div><h2 id="ct">${esc(c.title)}</h2><p>${esc(c.text)}</p>
+      <div class="choices">${c.choices.map((ch, i) => `<button class="choice" onclick="choose(${i})"><strong>${esc(ch.label)}</strong><span>${esc(ch.hint)}</span></button>`).join("")}</div></div>`;
+  }
+  const first = ov.querySelector("button"); if (first) first.focus({ preventScroll: true });
+}
+
+function sparkline(hist) {
+  const W = 600, H = 120, P = 8;
+  const xs = (i) => P + (i / Math.max(1, hist.length - 1)) * (W - 2 * P);
+  const line = (vals, lo, hi) => vals.map((v, i) => `${i ? "L" : "M"}${xs(i).toFixed(1)} ${(H - P - ((v - lo) / (hi - lo || 1)) * (H - 2 * P)).toFixed(1)}`).join(" ");
+  const b = hist.map((h) => h.budget), hp = hist.map((h) => h.happiness);
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Ngân sách và hạnh phúc qua từng tháng">
+    <path d="${line(b, Math.min(0, ...b), Math.max(...b))}" fill="none" stroke="var(--accent)" stroke-width="3" vector-effect="non-scaling-stroke"/>
+    <path d="${line(hp, 0, 100)}" fill="none" stroke="var(--good)" stroke-width="3" vector-effect="non-scaling-stroke"/></svg>`;
+}
+
+function endView() {
+  const s = ui.s, city = E.CITY_BY_ID[s.city], st = E.stars(s), idx = E.CITIES.indexOf(city);
+  const next = E.CITIES[idx + 1];
+  const title = s.status === "FAILED" ? (s.budget < E.CFG.FAIL_BUDGET ? "Thành phố phá sản" : "Thành phố bỏ hoang") : st === 3 ? "Thị trưởng huyền thoại!" : st === 2 ? "Nhiệm kỳ thành công" : "Bạn đã trụ được";
+  const why = s.status === "FAILED" ? `Tháng ${s.month}: ${s.budget < E.CFG.FAIL_BUDGET ? `kho bạc âm ${money(-s.budget)}, quá mức -$5.000.` : "dân số xuống dưới 30 người."}` : `Hết 12 tháng ở ${city.name}.`;
+  return `${header()}
+  <div class="end">
+    <div class="bigstars" aria-label="${st} trên 3 sao">${starRow(st)}</div>
+    <h2>${title}</h2><p class="muted" style="margin:0">${why}</p>
+    <section class="panel goalsBox">${goalsList(s, false)}</section>
+    <section class="panel">${sparkline(s.history)}<div class="legend"><span><i style="background:var(--accent)"></i>Ngân sách</span><span><i style="background:var(--good)"></i>Hạnh phúc</span></div></section>
+    <section class="panel" style="text-align:left"><h3>Những quyết định của bạn</h3><ul class="log">${s.log.map((l) => `<li><span class="num">T${l.month}</span> - ${esc(l.title)}: <em>${esc(l.choice)}</em>${l.luck ? ` (${l.luck === "win" ? "may" : "xui"})` : ""}</li>`).join("") || "<li>Không có</li>"}</ul></section>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="newGame('${s.city}')">Chơi lại ${esc(city.name)}</button>
+      ${next && unlocked(idx + 1) ? `<button class="btn btn-primary" onclick="newGame('${next.id}')">Sang ${esc(next.name)} ▸</button>` : next ? `<button class="btn" disabled>${esc(next.name)}: cần 1 sao</button>` : ""}
+      <button class="btn" onclick="ui.screen='cities';render()">Chọn thành phố</button>
+    </div>
+  </div>`;
+}
+
+// skyline nhỏ trên thẻ chọn thành phố, vẽ bằng canvas cho khỏi cần ảnh
+function drawSkyline(cv) {
+  const seed0 = +cv.dataset.seed;
+  const r = ((x) => () => (x = (x * 9301 + 49297) % 233280) / 233280)(seed0 * 977 + 13);
+  const w = cv.clientWidth, h = cv.clientHeight, dpr = devicePixelRatio || 1;
+  cv.width = w * dpr; cv.height = h * dpr;
+  const g = cv.getContext("2d"); g.scale(dpr, dpr);
+  const css = getComputedStyle(document.documentElement);
+  const cols = [["#5aa64b", "#7cc36b"], ["#3a7bd5", "#6b7f99"], ["#e0b341", "#5aa64b"]][seed0];
+  g.fillStyle = cols[1]; g.fillRect(0, h - 8, w, 8);
+  for (let x = 4; x < w - 6;) {
+    const bw = 10 + r() * 22, bh = 12 + r() * (seed0 === 1 ? 46 : 30);
+    g.fillStyle = r() > 0.5 ? cols[0] : css.getPropertyValue("--muted").trim();
+    g.globalAlpha = 0.55 + r() * 0.45;
+    g.fillRect(x, h - 8 - bh, bw, bh);
+    if (seed0 === 1 && r() > 0.7) g.fillRect(x + bw / 2 - 2, h - 8 - bh - 14, 4, 14);
+    x += bw + 3;
+  }
+  g.globalAlpha = 1;
+}
+</script>

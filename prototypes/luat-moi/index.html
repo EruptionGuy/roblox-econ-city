@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Econ City: bản thử</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+/* Bố cục: trái là bản đồ 12x12, phải là bàn làm việc (xây, thuế, chạy, vì sao, sự kiện, lịch sử). */
+:root {
+  --bg: #e8eef5; --surface: #ffffff; --sunk: #f2f5f9; --ink: #14233a; --muted: #5a6a80; --line: #d4dde8;
+  --accent: #f07d19; --accent-ink: #ffffff; --accent-deep: #b85a08;
+  --good: #1d8f4e; --warn: #c98a00; --bad: #d1433f;
+  --grass: #8fbf72; --plot: #b9dca0; --road: #6f7782; --road-off: #b3b8c0;
+  --f-display: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --f-body: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1625; --surface: #172236; --sunk: #121c2d; --ink: #e6edf7; --muted: #95a6bd; --line: #2a3a54;
+  --accent: #ff9638; --accent-ink: #1a0f02; --accent-deep: #c96a10;
+  --good: #3fc07a; --warn: #f0b429; --bad: #ff6b66;
+  --grass: #26401f; --plot: #33532b; --road: #5d6573; --road-off: #39404b; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1625; --surface: #172236; --sunk: #121c2d; --ink: #e6edf7; --muted: #95a6bd; --line: #2a3a54;
+  --accent: #ff9638; --accent-ink: #1a0f02; --accent-deep: #c96a10;
+  --good: #3fc07a; --warn: #f0b429; --bad: #ff6b66;
+  --grass: #26401f; --plot: #33532b; --road: #5d6573; --road-off: #39404b; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body) }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 14px 16px 64px }
+h1, h2 { font-family: var(--f-display); line-height: 1.1; margin: 0 }
+h2 { font-size: 18px; margin-bottom: 8px }
+button, select, input { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px }
+.num { font-variant-numeric: tabular-nums }
+.muted { color: var(--muted) } .small { font-size: 13px }
+.good { color: var(--good) } .bad { color: var(--bad) } .warn { color: var(--warn) }
+
+.btn { border: 0; border-radius: 12px; padding: 8px 14px; font-weight: 700; background: var(--sunk); box-shadow: 0 3px 0 var(--line); transition: transform .06s, box-shadow .06s }
+.btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--line) }
+.btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 4px 0 var(--accent-deep); font-family: var(--f-display); font-size: 18px }
+.btn-primary:active { box-shadow: 0 0 0 var(--accent-deep); transform: translateY(4px) }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px }
+.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap }
+.brand h1 { font-size: 26px; font-weight: 800 }
+.tag { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-deep); background: color-mix(in srgb, var(--accent) 16%, transparent); padding: 2px 8px; border-radius: 99px }
+.top-actions { display: flex; gap: 10px; align-items: center }
+.top-actions a { color: var(--muted) }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; margin-bottom: 14px }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; min-width: 0 }
+.stat span { display: block; font-size: 12px; color: var(--muted); font-weight: 600 }
+.stat b { display: block; font: 800 22px/1.15 var(--f-display); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.stat small { display: block; font-size: 12px; line-height: 1.3; color: var(--muted) }
+.stat small.good { color: var(--good) } .stat small.bad { color: var(--bad) }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr) } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; margin-bottom: 12px }
+
+/* Bản đồ */
+.board { position: sticky; top: 8px }
+@media (max-width: 900px) { .board { position: static } }
+#grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; background: var(--grass); padding: 8px; border-radius: 16px; max-width: 680px; margin: 0 auto; touch-action: none; user-select: none; -webkit-user-select: none }
+.cell { aspect-ratio: 1; border: 0; border-radius: 6px; background: var(--plot); padding: 0; display: grid; place-items: center; font-size: clamp(13px, 3vw, 26px); line-height: 1; position: relative; min-width: 0 }
+.cell:hover { box-shadow: inset 0 0 0 2px var(--accent) }
+.cell.t-road { background: var(--road); border-radius: 2px }
+.cell.t-road.off { background: var(--road-off) }
+.cell.t-house { background: color-mix(in srgb, #f2b84b 45%, var(--surface)) }
+.cell.t-shop { background: color-mix(in srgb, #f07d19 38%, var(--surface)) }
+.cell.t-factory { background: color-mix(in srgb, #8a8f98 45%, var(--surface)) }
+.cell.t-office { background: color-mix(in srgb, #4a90d9 38%, var(--surface)) }
+.cell.t-hospital { background: color-mix(in srgb, #e05a5a 32%, var(--surface)) }
+.cell.t-school { background: color-mix(in srgb, #9b6bd6 32%, var(--surface)) }
+.cell.t-park { background: color-mix(in srgb, #3fae5a 48%, var(--surface)) }
+.cell.off:not(.t-road) { opacity: .55; outline: 2px dashed var(--bad); outline-offset: -2px }
+.cell.gate::after { content: "CỔNG"; font: 700 clamp(6px, 1.1vw, 10px)/1 var(--f-body); color: #fff; letter-spacing: .04em }
+.cell.path { box-shadow: inset 0 0 0 3px var(--accent) }
+.hint { text-align: center; margin: 8px 0 0 }
+
+/* Bàn làm việc */
+.tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px }
+.tool { border: 2px solid var(--line); background: var(--sunk); border-radius: 10px; padding: 6px 4px; display: grid; justify-items: center; gap: 1px; font-size: 12px; min-width: 0 }
+.tool .ic { font-size: 22px; line-height: 1.2 }
+.tool b { font-weight: 700; white-space: nowrap }
+.tool small { color: var(--muted); font-variant-numeric: tabular-nums }
+.tool[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--surface)) }
+.ic.road-ic { width: 22px; height: 22px; background: var(--road); border-radius: 3px; margin: 2px 0 }
+input[type="range"] { width: 100%; accent-color: var(--accent) }
+.run { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+.run .btn-primary { grid-column: 1 / -1 }
+.progress { grid-column: 1 / -1; height: 6px; background: var(--sunk); border-radius: 99px; overflow: hidden }
+#bar { height: 100%; width: 0; background: var(--accent) }
+dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; font-size: 14px }
+dt { color: var(--muted) } dd { margin: 0; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums }
+dl .sep { grid-column: 1 / -1; border-top: 1px solid var(--line); margin: 4px 0 }
+ul.plain { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px }
+.row { display: flex; gap: 8px } .row select { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--sunk); padding: 6px }
+.tablewrap { max-height: 260px; overflow: auto }
+table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums }
+th, td { padding: 3px 4px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap }
+th { position: sticky; top: 0; background: var(--surface); color: var(--muted); font-weight: 600 }
+
+dialog { border: 0; border-radius: 18px; padding: 22px; background: var(--surface); color: var(--ink); max-width: min(420px, calc(100vw - 32px)) }
+dialog::backdrop { background: rgb(0 0 0 / .45) }
+dialog h2 { font-size: 26px }
+#toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 99px; font-weight: 600; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: calc(100vw - 32px) }
+#toast.show { opacity: 1 } #toast.err { background: var(--bad); color: #fff }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand"><h1>Econ City</h1><span class="tag">Bản thử luật xây thành phố</span></div>
+    <div class="top-actions"><a href="../../docs/luat-choi-moi.md">Luật chơi</a><button class="btn" id="newGame" type="button">Ván mới</button></div>
+  </header>
+
+  <section class="stats" aria-label="Chỉ số thành phố">
+    <div class="stat"><span>Tháng</span><b id="sMonth"></b><small id="sStatus"></small></div>
+    <div class="stat"><span>Ngân sách</span><b id="sBudget"></b><small id="sNet"></small></div>
+    <div class="stat"><span>Dân số</span><b id="sPop"></b><small id="sPopSub"></small></div>
+    <div class="stat"><span>Việc làm E</span><b id="sE"></b><small id="sESub"></small></div>
+    <div class="stat"><span>Hạnh phúc H</span><b id="sH"></b><small>trên 50 thì có người đến</small></div>
+    <div class="stat"><span>Dịch vụ S</span><b id="sS"></b><small id="sSSub"></small></div>
+    <div class="stat"><span>Hàng cho shop G</span><b id="sG"></b><small id="sGSub"></small></div>
+    <div class="stat"><span>Điểm</span><b id="sScore"></b><small>dân có việc × H/100 + ngân sách/100</small></div>
+  </section>
+
+  <div class="layout">
+    <section class="board">
+      <div id="grid" role="group" aria-label="Bản đồ 12 × 12"></div>
+      <p class="hint muted small">Chọn công trình bên phải rồi bấm vào ô trống. Đường: giữ chuột và kéo (tối đa 24 ô một lần). Mọi thứ phải nối đường về ô <b>CỔNG</b>; ô viền đỏ là chưa nối.</p>
+    </section>
+
+    <aside class="side">
+      <section class="card"><h2>Xây dựng</h2><div class="tools" id="tools"></div></section>
+      <section class="card">
+        <h2>Thuế: <span id="taxVal" class="num"></span></h2>
+        <input type="range" id="tax" min="0" max="50" step="1" aria-label="Thuế suất">
+        <p class="muted small" style="margin:4px 0 0">Thu thuế dự kiến <b id="taxIn" class="num"></b>/tháng, bảo trì <b id="maint" class="num"></b>/tháng.</p>
+      </section>
+      <section class="card run">
+        <button class="btn btn-primary" id="play" type="button"></button>
+        <button class="btn" id="step" type="button">Qua tháng ngay</button>
+        <button class="btn" id="speed" type="button"></button>
+        <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+      </section>
+      <section class="card"><h2>Vì sao hạnh phúc là <span id="whyH" class="num"></span>?</h2><dl id="why"></dl></section>
+      <section class="card"><h2>Cảnh báo</h2><ul class="plain" id="crises"></ul></section>
+      <section class="card">
+        <h2>Sự kiện (giáo viên gán)</h2>
+        <div class="row"><select id="scenario" aria-label="Chọn sự kiện"></select><button class="btn" id="assign" type="button">Gán</button></div>
+        <ul class="plain" id="active" style="margin-top:8px"></ul>
+      </section>
+      <section class="card">
+        <h2>Lịch sử</h2>
+        <div class="tablewrap"><table><thead><tr><th>Tháng</th><th>Ngân sách</th><th>Doanh thu</th><th>H</th><th>E</th><th>Dân</th></tr></thead><tbody id="history"></tbody></table></div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<dialog id="end"><h2 id="endTitle"></h2><p id="endText"></p><button class="btn btn-primary" id="again" type="button">Ván mới</button></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="engine.js"></script>
+<script>
+// vỏ UI, bỏ đi được. luật chơi nằm hết trong engine.js
+const E = window.EconGrid;
+const { CFG, B } = E;
+const N = CFG.size;
+const $ = (id) => document.getElementById(id);
+const fmt = (x, d = 0) => x.toLocaleString("vi-VN", { maximumFractionDigits: d });
+const TOOLS = ["house", "shop", "factory", "office", "hospital", "school", "park", "road", "demolish"];
+const SPEEDS = [1, 4, 10];
+let s = E.newGame(), tool = "house", speed = 1, elapsed = 0, drag = null;
+
+// ---- Lưới ----
+const cells = [];
+for (let i = 0; i < N * N; i++) {
+  const el = document.createElement("button");
+  el.type = "button";
+  el.className = "cell";
+  el.dataset.i = i;
+  $("grid").append(el);
+  cells.push(el);
+}
+const cellAt = (x, y) => document.elementFromPoint(x, y)?.closest?.(".cell");
+
+// kéo đường: chỉ nhận ô cùng hàng/cột với ô cuối, tự lấp các ô ở giữa
+function extend(path, j) {
+  const last = path.at(-1);
+  if (path.includes(j)) return;
+  const lx = last % N, ly = Math.floor(last / N), jx = j % N, jy = Math.floor(j / N);
+  if (lx !== jx && ly !== jy) return;
+  const step = lx === jx ? (jy > ly ? N : -N) : (jx > lx ? 1 : -1);
+  for (let k = last + step; path.length < CFG.maxRoadPath; k += step) {
+    if (!path.includes(k)) path.push(k);
+    if (k === j) break;
+  }
+}
+
+$("grid").addEventListener("pointerdown", (ev) => {
+  const el = ev.target.closest(".cell");
+  if (!el || ev.button > 0) return;
+  ev.preventDefault();
+  if (tool === "road") { drag = [Number(el.dataset.i)]; render(); } else act(Number(el.dataset.i));
+});
+document.addEventListener("pointermove", (ev) => {
+  if (!drag) return;
+  const el = cellAt(ev.clientX, ev.clientY);
+  if (el) { extend(drag, Number(el.dataset.i)); render(); }
+});
+document.addEventListener("pointerup", () => {
+  if (!drag) return;
+  const path = drag;
+  drag = null;
+  report(E.buildRoad(s, path), (r) => (r.built ? `${r.built} ô đường: -${E.money(r.cost)}` : "Đoạn này đã là đường"));
+});
+// bàn phím: Enter/Space trên ô ra click có detail = 0
+$("grid").addEventListener("click", (ev) => {
+  const el = ev.target.closest(".cell");
+  if (el && ev.detail === 0) act(Number(el.dataset.i));
+});
+
+function act(i) {
+  if (tool === "demolish") report(E.demolish(s, i), (r) => `Phá dỡ, hoàn ${E.money(r.refund)}`);
+  else if (tool === "road") report(E.buildRoad(s, [i]), (r) => (r.built ? `Đường: -${E.money(r.cost)}` : "Ô này đã là đường"));
+  else report(E.build(s, tool, i), (r) => `${B[tool].label}: -${E.money(r.cost)}`);
+}
+
+let toastTimer;
+function toast(text, isErr) {
+  const t = $("toast");
+  t.textContent = text;
+  t.className = "show" + (isErr ? " err" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (t.className = ""), 2200);
+}
+function report(r, okText) {
+  toast(r.ok ? okText(r) : r.err, !r.ok);
+  render();
+}
+
+// ---- Bàn làm việc ----
+for (const k of TOOLS) {
+  const el = document.createElement("button");
+  el.type = "button";
+  el.className = "tool";
+  el.dataset.tool = k;
+  el.addEventListener("click", () => { tool = k; render(); });
+  $("tools").append(el);
+}
+$("tax").addEventListener("input", (ev) => { E.setTax(s, Number(ev.target.value)); render(); });
+$("play").addEventListener("click", () => { E.togglePause(s); render(); });
+$("step").addEventListener("click", () => {
+  if (E.finished(s)) return;
+  const paused = s.status === "PAUSED";
+  s.status = "ACTIVE"; // như nút "Tick ngay" trong Studio
+  doTick();
+  if (paused && s.status === "ACTIVE") s.status = "PAUSED";
+  render();
+});
+$("speed").addEventListener("click", () => { speed = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]; render(); });
+for (const sc of E.SCENARIOS) $("scenario").add(new Option(`${sc.name} (${sc.months} tháng): ${sc.note}`, sc.id));
+$("assign").addEventListener("click", () => report(E.addScenario(s, $("scenario").value), () => "Đã gán sự kiện"));
+function newGame() { s = E.newGame(); elapsed = 0; $("end").close(); render(); }
+$("newGame").addEventListener("click", newGame);
+$("again").addEventListener("click", newGame);
+
+function doTick() {
+  elapsed = 0;
+  if (!E.tick(s)) return;
+  render();
+  if (E.finished(s)) {
+    $("endTitle").textContent = s.status === "ENDED" ? "Hết nhiệm kỳ 24 tháng!" : `Phá sản ở tháng ${s.month}`;
+    $("endText").textContent = `Điểm ${fmt(s.score)} - ${fmt(s.pop)} dân - hạnh phúc ${fmt(s.H)} - ngân sách ${E.money(s.budget)}.`;
+    $("end").showModal();
+  }
+}
+
+let lastT = performance.now();
+function loop(t) {
+  const dt = t - lastT;
+  lastT = t;
+  if (s.status === "ACTIVE") {
+    elapsed += dt * speed;
+    if (elapsed >= CFG.tickSeconds * 1000) doTick();
+  }
+  $("bar").style.width = `${Math.min(100, (elapsed / (CFG.tickSeconds * 1000)) * 100)}%`;
+  requestAnimationFrame(loop);
+}
+
+// ---- vẽ lại hết từ state ----
+function render() {
+  const d = E.compute(s, s.pop);
+  const target = E.targetPop(d.C, d.J, s.H);
+  const A = E.attraction(s.H);
+
+  cells.forEach((el, i) => {
+    const t = s.cells[i];
+    el.className = "cell" + (t ? ` t-${t}` : "") + (t && !d.conn[i] ? " off" : "") + (i === CFG.gate ? " gate" : "") + (drag?.includes(i) ? " path" : "");
+    el.textContent = t ? B[t].icon : "";
+    const label = i === CFG.gate ? "Cổng" : t ? B[t].label + (d.conn[i] ? "" : ", chưa nối đường") : "Ô trống";
+    el.title = label;
+    el.setAttribute("aria-label", `${label}, cột ${(i % N) + 1}, hàng ${Math.floor(i / N) + 1}`);
+  });
+
+  $("sMonth").textContent = `${s.month}/${CFG.months}`;
+  $("sStatus").textContent = { ACTIVE: "đang chạy", PAUSED: "tạm dừng", ENDED: "hết ván", FAILED: "phá sản" }[s.status];
+  $("sBudget").textContent = E.money(s.budget);
+  $("sBudget").className = s.budget < 0 ? "bad" : "";
+  $("sNet").textContent = `${d.net >= 0 ? "+" : ""}${E.money(d.net)}/tháng`;
+  $("sNet").className = d.net < 0 ? "bad" : "good";
+  $("sPop").textContent = fmt(s.pop);
+  $("sPopSub").textContent = `${fmt(d.C)} chỗ ở - mục tiêu ${fmt(target)}`;
+  $("sE").textContent = s.pop ? `${fmt(d.E)}%` : "—";
+  $("sESub").textContent = `${fmt(d.J)} chỗ làm`;
+  $("sH").textContent = fmt(d.H);
+  $("sH").className = d.H < 50 ? "bad" : d.H < 65 ? "warn" : "good";
+  $("sS").textContent = s.pop ? fmt(d.S) : "—";
+  $("sSSub").textContent = `phục vụ ${fmt(d.pts * CFG.residentsPerPoint)} người`;
+  $("sG").textContent = d.slots.shop ? `${fmt(d.G * 100)}%` : "—";
+  $("sGSub").textContent = `${d.slots.factory} chỗ nhà máy / ${d.slots.shop} chỗ shop`;
+  $("sScore").textContent = fmt(s.score);
+
+  for (const el of $("tools").children) {
+    const k = el.dataset.tool;
+    el.setAttribute("aria-pressed", String(k === tool));
+    el.innerHTML = k === "demolish"
+      ? `<span class="ic">🧹</span><b>Phá dỡ</b><small>hoàn 50%</small>`
+      : `<span class="ic${k === "road" ? " road-ic" : ""}">${B[k].icon}</span><b>${B[k].label}</b><small>${E.money(E.priceOf(s, k))}</small>`;
+  }
+
+  $("tax").value = s.tax;
+  $("taxVal").textContent = `${s.tax}%`;
+  $("taxIn").textContent = E.money(d.taxIn);
+  $("maint").textContent = E.money(d.M);
+  $("play").textContent = s.status === "ACTIVE" ? "Tạm dừng" : s.month === 0 ? "Bắt đầu" : "Chạy tiếp";
+  $("play").disabled = $("step").disabled = E.finished(s);
+  $("speed").textContent = `Tốc độ ×${speed}`;
+
+  $("whyH").textContent = fmt(d.H);
+  const p = d.parts;
+  $("why").innerHTML = `
+    <dt>Việc làm: 0,35 × ${s.pop ? fmt(d.E) : 100}</dt><dd>${fmt(p.E, 1)}</dd>
+    <dt>Thuế: 0,45 × (100 - 2 × ${s.tax})</dt><dd>${fmt(p.T, 1)}</dd>
+    <dt>Dịch vụ: 0,20 × ${s.pop ? fmt(d.S) : 100}</dt><dd>${fmt(p.S, 1)}</dd>
+    ${p.event ? `<dt>Sự kiện</dt><dd class="bad">${fmt(p.event)}</dd>` : ""}
+    <div class="sep"></div>
+    <dt>Độ hấp dẫn (theo H tháng trước = ${fmt(s.H)})</dt><dd>${fmt(A, 2)}</dd>
+    <dt>Dân mục tiêu = min(${fmt(d.C)} chỗ ở, ${fmt(d.J)} việc × ${fmt(A, 2)})</dt><dd>${fmt(target)}</dd>`;
+
+  $("crises").innerHTML = s.crises.length
+    ? s.crises.map((c) => `<li class="bad">⚠ ${E.CRISIS_LABELS[c]}</li>`).join("")
+    : `<li class="muted">Không có</li>`;
+  $("active").innerHTML = s.scenarios.length
+    ? s.scenarios.map((a) => { const sc = E.scenarioById(a.id); return `<li>⚡ ${sc.name}: còn ${sc.months - a.monthsActive} tháng</li>`; }).join("")
+    : `<li class="muted">Chưa có sự kiện</li>`;
+  $("history").innerHTML = s.history.slice().reverse().map((h) =>
+    `<tr><td>${h.month}</td><td>${E.money(h.budget)}</td><td>${E.money(h.revenue)}</td><td>${h.happiness}</td><td>${h.employment}%</td><td>${fmt(h.population)}</td></tr>`).join("");
+}
+
+render();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

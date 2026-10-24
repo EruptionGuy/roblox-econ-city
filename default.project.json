@@ -1,0 +1,23 @@
+{
+  "name": "EconCity",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "EconCity": {
+        "$path": "src/shared"
+      }
+    },
+    "ServerScriptService": {
+      "EconCityServer": {
+        "$path": "src/server"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "EconCityClient": {
+          "$path": "src/client"
+        }
+      }
+    }
+  }
+}

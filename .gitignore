@@ -1,0 +1,9 @@
+build/
+*.rbxl.lock
+*.rbxlx.lock
+.DS_Store
+
+# video và file nén để trên máy, không đưa lên repo (GitHub không nhận file > 100 MB)
+*.mp4
+backup-*.tar.gz
+EconCity-Roblox-*.tar.gz
