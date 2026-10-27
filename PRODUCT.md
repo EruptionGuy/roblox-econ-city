@@ -24,7 +24,7 @@ thành phố để giải trí thuần tuý.
 
 - Chơi theo lớp: giáo viên đưa mã lớp, học sinh vào game, giáo viên gán sự kiện cho cả lớp.
 - Một ván 24 tháng, 20 giây một tháng (khoảng 8 phút), có tạm dừng, lúc tạm dừng vẫn xây được.
-- Học sinh ở Việt Nam chơi qua Roblox do VNG phát hành. Toàn bộ chữ trong game là tiếng Việt.
+- Học sinh ở Việt Nam chơi qua Roblox do VNG phát hành. Toàn bộ chữ trong game là tiếng Anh.
 - Máy trong lớp thường yếu, nhiều em dùng điện thoại: game phải chạy được trên máy yếu, chữ đọc được trên điện thoại,
   dùng được bằng cảm ứng và tay cầm.
 

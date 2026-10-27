@@ -95,7 +95,7 @@ sessions = SessionService.new({
 		end
 		for _, scenario in ipairs(result.finishedScenarios or {}) do
 			local def = Scenarios.get(scenario.id)
-			notify(userId, "Sự kiện đã kết thúc: " .. ((def and def.name) or scenario.name or tostring(scenario.id)))
+			notify(userId, "Event ended: " .. ((def and def.name) or scenario.name or tostring(scenario.id)))
 		end
 	end,
 	onSessionFinished = function(userId, profile)
@@ -103,9 +103,9 @@ sessions = SessionService.new({
 			classroom:persistProgress(userId, profile)
 		end)
 		if profile.session.status == GameTick.STATUS.ENDED then
-			notify(userId, string.format("Chúc mừng! Bạn đã hoàn thành nhiệm kỳ %d tháng.", Config.GAME_DURATION_MONTHS))
+			notify(userId, string.format("Congratulations! You finished your %d-month term.", Config.GAME_DURATION_MONTHS))
 		else
-			notify(userId, "Thành phố phá sản. Hãy thử lại với cách xây và mức thuế khác!")
+			notify(userId, "The city went bankrupt. Try again with a different layout and tax rate!")
 		end
 	end,
 })
@@ -156,7 +156,7 @@ classroom = ClassroomService.new({
 	teleportToRoom = function(userId, accessCode)
 		local player = Players:GetPlayerByUserId(userId)
 		if not player then
-			error("Người chơi không còn trong server")
+			error("That player is no longer on this server")
 		end
 		-- lưu cuối + nhả lock trước khi teleport để server mới đọc được data mới nhất.
 		-- tóm tắt lớp thì ghi 1 lần lúc thật sự rời server này
@@ -253,13 +253,13 @@ if persistence.mode == "datastore" then
 					admin:onMessage(packet.Data)
 				end)
 				if not okMsg then
-					warn("[EconCity] Lỗi xử lý thông điệp: " .. tostring(msgErr))
+					warn("[EconCity] Message handling error: " .. tostring(msgErr))
 				end
 			end)
 		end)
 		messagingReady = ok
 		if not ok then
-			warn("[EconCity] MessagingService không khả dụng: " .. tostring(err))
+			warn("[EconCity] MessagingService unavailable: " .. tostring(err))
 		end
 	end)
 end
@@ -279,7 +279,7 @@ pushState = function(player, reason)
 		end
 	end)
 	if not ok then
-		warn("[EconCity] Lỗi gửi trạng thái: " .. tostring(err))
+		warn("[EconCity] Error sending state: " .. tostring(err))
 	end
 end
 
@@ -297,14 +297,14 @@ local function onPlayerAdded(player)
 		classroom:syncPendingScenarios(userId, profile)
 	end)
 	if not okSync then
-		warn("[EconCity] Lỗi đồng bộ sự kiện lớp: " .. tostring(syncErr))
+		warn("[EconCity] Class event sync error: " .. tostring(syncErr))
 	end
 	if not player.Parent then
 		sessions:unloadPlayer(userId)
 		return
 	end
 	if profile.loadFailed then
-		noticeEvent:FireClient(player, "Không tải được dữ liệu đã lưu nên ván này sẽ không được lưu.")
+		noticeEvent:FireClient(player, "Saved data couldn't be loaded, so this game won't be saved.")
 	end
 	pushState(player, "init")
 end
@@ -338,7 +338,7 @@ end)
 -- teleport vào phòng riêng fail sau khi TeleportAsync đã return: chơi tiếp ở đây
 TeleportService.TeleportInitFailed:Connect(function(player, result, message)
 	if sessions:teleportFailed(player.UserId) then
-		notify(player.UserId, "Không vào được phòng học riêng (" .. tostring(message or result) .. "). Bạn tiếp tục chơi ở đây.")
+		notify(player.UserId, "Couldn't join the private classroom (" .. tostring(message or result) .. "). You can keep playing here.")
 		pushState(player, "teleportFailed")
 	end
 end)
@@ -385,7 +385,7 @@ task.spawn(function()
 			end
 		end)
 		if not okLoop then
-			warn("[EconCity] Lỗi vòng tick: " .. tostring(loopErr))
+			warn("[EconCity] Tick loop error: " .. tostring(loopErr))
 			sessions.nextTickAt = Workspace:GetServerTimeNow() + Config.TICK_SECONDS
 		end
 	end
@@ -396,14 +396,14 @@ local handlers = {}
 
 local function requireTeacher(player)
 	if not Roles.isTeacher(player) then
-		return false, "Chỉ dành cho giáo viên"
+		return false, "Teachers only"
 	end
 	return true
 end
 
 local function requireOwner(player)
 	if not Roles.isOwner(player) then
-		return false, "Chỉ chủ game mới dùng được chức năng này"
+		return false, "Only the game owner can use this"
 	end
 	return true
 end
@@ -469,19 +469,19 @@ end
 
 handlers.tickNow = function(player)
 	if not IS_STUDIO then
-		return false, "Chỉ dùng được trong Roblox Studio"
+		return false, "Only available in Roblox Studio"
 	end
 	local result = sessions:tickOne(player.UserId)
 	pushState(player, result and "tick" or "clock")
 	if not result then
-		return false, "Ván đang không chạy"
+		return false, "The game isn't running"
 	end
 	return true
 end
 
 handlers.demoBuild = function(player)
 	if not IS_STUDIO then
-		return false, "Chỉ dùng được trong Roblox Studio"
+		return false, "Only available in Roblox Studio"
 	end
 	local ok, data = sessions:demoBuild(player.UserId)
 	if ok then
@@ -634,10 +634,10 @@ end
 
 requestFunction.OnServerInvoke = function(player, action, payload)
 	if type(action) ~= "string" or not Net.ACTIONS[action] or not handlers[action] then
-		return { ok = false, error = "Hành động không hợp lệ" }
+		return { ok = false, error = "Invalid action" }
 	end
 	if payload ~= nil and type(payload) ~= "table" then
-		return { ok = false, error = "Dữ liệu không hợp lệ" }
+		return { ok = false, error = "Invalid data" }
 	end
 	local userId = player.UserId
 	-- rate limit kiểu token bucket: cho burst vài request (mở bảng gọi 2-3 API cùng lúc), chặn spam liên tục
@@ -650,11 +650,11 @@ requestFunction.OnServerInvoke = function(player, action, payload)
 	bucket.tokens = math.min(Config.REQUEST_BURST, bucket.tokens + (now - bucket.at) * Config.REQUEST_REFILL_PER_SECOND)
 	bucket.at = now
 	if bucket.tokens < 1 then
-		return { ok = false, error = "Bạn thao tác quá nhanh" }
+		return { ok = false, error = "You're going too fast" }
 	end
 	bucket.tokens = bucket.tokens - 1
 	if not sessions:getProfile(userId) then
-		return { ok = false, error = "Đang tải dữ liệu, hãy thử lại sau giây lát" }
+		return { ok = false, error = "Still loading data, try again in a moment" }
 	end
 	-- cooldown riêng cho action tốn tài nguyên (DataStore, lọc chữ, teleport).
 	-- đánh dấu trước khi xử lý, không thì request gửi cùng lúc lách được cooldown
@@ -664,11 +664,11 @@ requestFunction.OnServerInvoke = function(player, action, payload)
 		local marks = lastActionAt[userId] or {}
 		lastActionAt[userId] = marks
 		if marks["busy:" .. action] then
-			return { ok = false, error = "Đang xử lý yêu cầu trước, hãy đợi" }
+			return { ok = false, error = "Still working on your last request, please wait" }
 		end
 		local last = marks[action]
 		if last and now - last < cooldown then
-			return { ok = false, error = string.format("Hãy đợi %d giây rồi thử lại", math.ceil(cooldown - (now - last))) }
+			return { ok = false, error = string.format("Please wait %ds and try again", math.ceil(cooldown - (now - last))) }
 		end
 		previous = last
 		marks[action] = now
@@ -684,19 +684,19 @@ requestFunction.OnServerInvoke = function(player, action, payload)
 		end
 	end
 	if not success then
-		warn("[EconCity] Lỗi xử lý " .. action .. ": " .. tostring(ok))
-		return { ok = false, error = "Server gặp lỗi, thử lại sau" }
+		warn("[EconCity] Error handling " .. action .. ": " .. tostring(ok))
+		return { ok = false, error = "Server error, try again later" }
 	end
 	if ok then
 		return { ok = true, data = data }
 	end
-	return { ok = false, error = data or "Không thực hiện được" }
+	return { ok = false, error = data or "Couldn't do that" }
 end
 
 print(string.format(
-	"[EconCity] Server v%s sẵn sàng, lưu trữ: %s%s, tick %ds",
+	"[EconCity] Server v%s ready, storage: %s%s, tick %ds",
 	Config.VERSION,
 	persistence.mode,
-	persistence.degraded and " (đang lỗi, thử lại từng lệnh)" or "",
+	persistence.degraded and " (failing, retrying per call)" or "",
 	Config.TICK_SECONDS
 ))

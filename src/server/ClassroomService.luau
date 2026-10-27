@@ -200,24 +200,24 @@ end
 
 function ClassroomService:createClass(teacherId, teacherName, className)
 	if not self.isTeacher(teacherId) then
-		return false, "Chỉ giáo viên mới tạo được lớp"
+		return false, "Only teachers can create classes"
 	end
 	local profile = self.sessions:getProfile(teacherId)
 	if not profile then
-		return false, "Dữ liệu chưa tải xong, thử lại sau giây lát"
+		return false, "Data is still loading, try again in a moment"
 	end
 	className = trimName(className)
 	if not className then
-		return false, "Hãy nhập tên lớp"
+		return false, "Enter a class name"
 	end
 	if #profile.teaching >= Config.MAX_CLASSES_PER_TEACHER then
-		return false, "Đã đạt số lớp tối đa (" .. Config.MAX_CLASSES_PER_TEACHER .. ")"
+		return false, "You've reached the class limit (" .. Config.MAX_CLASSES_PER_TEACHER .. ")"
 	end
 	-- tên lớp hiện cho HS nên phải lọc. Lọc lỗi thì dùng "Lớp <mã>"
 	local filteredName = self:_filter(className, teacherId)
 	for _ = 1, 8 do
 		local code = self:_generateCode()
-		local finalName = filteredName or ("Lớp " .. code)
+		local finalName = filteredName or ("Class " .. code)
 		local created = nil
 		local ok = self.persistence:update(Config.DATASTORE.classes, classKey(code), function(old)
 			created = nil
@@ -242,16 +242,16 @@ function ClassroomService:createClass(teacherId, teacherName, className)
 			return true, { code = code, name = finalName, renamed = filteredName == nil }
 		end
 		if not ok then
-			return false, "Lỗi lưu trữ, hãy thử lại"
+			return false, "Storage error, please try again"
 		end
 	end
-	return false, "Không tạo được mã lớp, hãy thử lại"
+	return false, "Couldn't create a class code, please try again"
 end
 
 function ClassroomService:getTeacherClasses(teacherId)
 	local profile = self.sessions:getProfile(teacherId)
 	if not profile then
-		return false, "Dữ liệu chưa tải xong, thử lại sau giây lát"
+		return false, "Data is still loading, try again in a moment"
 	end
 	local out = {}
 	for _, code in ipairs(profile.teaching) do
@@ -272,10 +272,10 @@ end
 function ClassroomService:_assertOwner(teacherId, code)
 	local record = self:getClass(code)
 	if not record then
-		return nil, "Không tìm thấy lớp"
+		return nil, "Class not found"
 	end
 	if record.teacherId ~= teacherId then
-		return nil, "Bạn không phải giáo viên của lớp này"
+		return nil, "You're not the teacher of this class"
 	end
 	return record
 end
@@ -368,7 +368,7 @@ function ClassroomService:getStudentDetail(teacherId, code, studentId)
 	studentId = tonumber(studentId)
 	local member = studentId and (record.members or {})[tostring(studentId)]
 	if not member then
-		return false, "Học sinh không thuộc lớp này"
+		return false, "That student isn't in this class"
 	end
 	local detail, online = self:_memberProgress(record, studentId, member)
 	return true, {
@@ -447,7 +447,7 @@ end
 
 function ClassroomService:listScenarios(teacherId)
 	if not self.isTeacher(teacherId) then
-		return false, "Chỉ dành cho giáo viên"
+		return false, "Teachers only"
 	end
 	local catalog = {}
 	for _, s in ipairs(Scenarios.CATALOG) do
@@ -461,7 +461,7 @@ function ClassroomService:listScenarios(teacherId)
 	end
 	local data = self:_loadCustomScenarios(teacherId)
 	if not data then
-		return false, "Không tải được kịch bản tuỳ chỉnh"
+		return false, "Couldn't load custom scenarios"
 	end
 	return true, { catalog = catalog, custom = data.list, max = Config.MAX_CUSTOM_SCENARIOS }
 end
@@ -469,14 +469,14 @@ end
 -- payload: { name, description, severity, durationMonths, effects }
 function ClassroomService:createScenario(teacherId, payload)
 	if not self.isTeacher(teacherId) then
-		return false, "Chỉ giáo viên mới tạo được kịch bản"
+		return false, "Only teachers can create scenarios"
 	end
 	if type(payload) ~= "table" then
-		return false, "Dữ liệu không hợp lệ"
+		return false, "Invalid data"
 	end
 	local name = trimName(payload.name)
 	if not name then
-		return false, "Hãy đặt tên cho kịch bản"
+		return false, "Give the scenario a name"
 	end
 	local description = Util.cleanUserText(payload.description, MAX_DESCRIPTION_CHARS, 400) or ""
 	local clean, err = Scenarios.sanitizeCustom(payload)
@@ -486,13 +486,13 @@ function ClassroomService:createScenario(teacherId, payload)
 	-- tên/mô tả hiện cho HS, lọc trước khi lưu
 	local filteredName = self:_filter(name, teacherId)
 	if not filteredName then
-		return false, "Chưa kiểm duyệt được tên kịch bản, hãy thử lại sau"
+		return false, "The scenario name couldn't be checked, try again later"
 	end
 	local filteredDescription = ""
 	if description ~= "" then
 		filteredDescription = self:_filter(description, teacherId)
 		if not filteredDescription then
-			return false, "Chưa kiểm duyệt được mô tả, hãy thử lại sau"
+			return false, "The description couldn't be checked, try again later"
 		end
 	end
 	local created, reason = nil, nil
@@ -500,7 +500,7 @@ function ClassroomService:createScenario(teacherId, payload)
 		created, reason = nil, nil
 		local data = (type(old) == "table" and type(old.list) == "table") and old or { nextId = 1, list = {} }
 		if #data.list >= Config.MAX_CUSTOM_SCENARIOS then
-			reason = "Đã đạt số kịch bản tối đa (" .. Config.MAX_CUSTOM_SCENARIOS .. ")"
+			reason = "You've reached the scenario limit (" .. Config.MAX_CUSTOM_SCENARIOS .. ")"
 			return nil
 		end
 		local n = tonumber(data.nextId) or (#data.list + 1)
@@ -518,20 +518,20 @@ function ClassroomService:createScenario(teacherId, payload)
 		return data
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	if not created then
-		return false, reason or "Không tạo được kịch bản"
+		return false, reason or "Couldn't create the scenario"
 	end
 	return true, created
 end
 
 function ClassroomService:deleteScenario(teacherId, scenarioId)
 	if not self.isTeacher(teacherId) then
-		return false, "Chỉ dành cho giáo viên"
+		return false, "Teachers only"
 	end
 	if type(scenarioId) ~= "string" then
-		return false, "Kịch bản không hợp lệ"
+		return false, "Invalid scenario"
 	end
 	local removed = false
 	local ok = self.persistence:update(Config.DATASTORE.scenarios, scenarioStoreKey(teacherId), function(old)
@@ -551,10 +551,10 @@ function ClassroomService:deleteScenario(teacherId, scenarioId)
 		return old
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	if not removed then
-		return false, "Không tìm thấy kịch bản"
+		return false, "Scenario not found"
 	end
 	return true
 end
@@ -576,7 +576,7 @@ function ClassroomService:_applyEntry(userId, profile, code, entry, silent)
 	end
 	local added = GameTick.addScenario(session, entry.scenarioId, { classCode = code, assignedBy = entry.by }, entry.def)
 	if added and self.notify and not silent then
-		self.notify(userId, "Giáo viên vừa gán sự kiện: " .. self:_scenarioName(entry))
+		self.notify(userId, "Your teacher just assigned an event: " .. self:_scenarioName(entry))
 	end
 	return added and true or false
 end
@@ -600,13 +600,13 @@ function ClassroomService:assignScenario(teacherId, code, scenarioId)
 		return false, err
 	end
 	if type(scenarioId) ~= "string" then
-		return false, "Kịch bản không tồn tại"
+		return false, "Scenario doesn't exist"
 	end
 	local def = nil
 	if not Scenarios.get(scenarioId) then
 		local data = self:_loadCustomScenarios(teacherId)
 		if not data then
-			return false, "Không tải được kịch bản tuỳ chỉnh"
+			return false, "Couldn't load custom scenarios"
 		end
 		for _, s in ipairs(data.list) do
 			if s.id == scenarioId then
@@ -620,7 +620,7 @@ function ClassroomService:assignScenario(teacherId, code, scenarioId)
 			end
 		end
 		if not def then
-			return false, "Kịch bản không tồn tại"
+			return false, "Scenario doesn't exist"
 		end
 	end
 	-- ghi log lớp trước (HS vắng nhận sau), rồi mới áp cho người đang chơi
@@ -644,7 +644,7 @@ function ClassroomService:assignScenario(teacherId, code, scenarioId)
 		return old
 	end)
 	if not ok or not entry then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	local appliedHere = self:applyEntryLocally(record.code, entry)
 	local broadcast = false
@@ -691,7 +691,7 @@ function ClassroomService:syncPendingScenarios(userId, profile)
 		end
 	end
 	if applied > 0 and self.notify then
-		self.notify(userId, "Trong lúc bạn vắng mặt, giáo viên đã gán " .. applied .. " sự kiện mới.")
+		self.notify(userId, "While you were away, your teacher assigned new events: " .. applied .. ".")
 	end
 	return applied
 end
@@ -743,7 +743,7 @@ function ClassroomService:onMessage(message)
 				return
 			end
 			entry.def = {
-				name = Util.cleanUserText(entry.def.name, MAX_NAME_CHARS, Config.MAX_TEXT_BYTES) or "Sự kiện của giáo viên",
+				name = Util.cleanUserText(entry.def.name, MAX_NAME_CHARS, Config.MAX_TEXT_BYTES) or "Teacher event",
 				description = Util.cleanUserText(entry.def.description, MAX_DESCRIPTION_CHARS, 400) or "",
 				severity = clean.severity,
 				durationMonths = clean.durationMonths,
@@ -752,7 +752,7 @@ function ClassroomService:onMessage(message)
 		end
 		self:applyEntryLocally(code, entry)
 	elseif message.kind == "roomOpened" then
-		self:_notifyMembersHere(code, "Giáo viên đã mở phòng học riêng cho lớp " .. code .. ". Mở mục Lớp học để vào phòng.")
+		self:_notifyMembersHere(code, "Your teacher opened a private classroom for class " .. code .. ". Open Class to join.")
 	end
 end
 
@@ -779,11 +779,11 @@ function ClassroomService:openRoom(teacherId, code)
 		return true, { code = record.code, reused = true }
 	end
 	if not self.reserveServer then
-		return false, "Phòng học riêng chỉ chạy khi game đã publish"
+		return false, "Private classrooms only work in a published game"
 	end
 	local okReserve, accessCode, privateServerId = pcall(self.reserveServer)
 	if not okReserve or type(accessCode) ~= "string" then
-		return false, "Phòng học riêng chỉ chạy khi game đã publish, trong Studio thì không"
+		return false, "Private classrooms only work in a published game, not in Studio"
 	end
 	local saved = false
 	local ok = self.persistence:update(Config.DATASTORE.classes, classKey(record.code), function(old)
@@ -800,9 +800,9 @@ function ClassroomService:openRoom(teacherId, code)
 		return old
 	end)
 	if not ok or not saved then
-		return false, "Không lưu được phòng học, hãy thử lại"
+		return false, "Couldn't save the classroom, please try again"
 	end
-	self:_notifyMembersHere(record.code, "Giáo viên đã mở phòng học riêng cho lớp " .. record.code .. ". Mở mục Lớp học để vào phòng.")
+	self:_notifyMembersHere(record.code, "Your teacher opened a private classroom for class " .. record.code .. ". Open Class to join.")
 	if self.publish then
 		self.publish({ kind = "roomOpened", code = record.code })
 	end
@@ -822,7 +822,7 @@ function ClassroomService:closeRoom(teacherId, code)
 		return old
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	return true
 end
@@ -830,24 +830,24 @@ end
 function ClassroomService:enterRoom(userId, code)
 	local record = self:getClass(code)
 	if not record then
-		return false, "Không tìm thấy lớp"
+		return false, "Class not found"
 	end
 	local isMember = record.teacherId == userId or self:_isMemberRecord(record, userId)
 	if not isMember then
-		return false, "Bạn chưa tham gia lớp này"
+		return false, "You haven't joined this class"
 	end
 	if not record.room or not record.room.accessCode then
-		return false, "Lớp chưa mở phòng học riêng"
+		return false, "This class has no private classroom open"
 	end
 	if self:_inThisRoom(record) then
-		return false, "Bạn đang ở trong phòng học riêng của lớp này rồi"
+		return false, "You're already in this class's private classroom"
 	end
 	if not self.teleportToRoom then
-		return false, "Phòng học riêng chỉ chạy khi game đã publish"
+		return false, "Private classrooms only work in a published game"
 	end
 	local ok, err = pcall(self.teleportToRoom, userId, record.room.accessCode)
 	if not ok then
-		return false, "Không chuyển được vào phòng: " .. tostring(err)
+		return false, "Couldn't move you to the classroom: " .. tostring(err)
 	end
 	return true
 end
@@ -857,34 +857,34 @@ end
 function ClassroomService:joinClass(userId, name, code)
 	code = normalizeCode(code)
 	if not code then
-		return false, "Mã lớp không hợp lệ"
+		return false, "Invalid class code"
 	end
 	local profile = self.sessions:getProfile(userId)
 	if not profile then
-		return false, "Dữ liệu chưa tải xong, thử lại sau giây lát"
+		return false, "Data is still loading, try again in a moment"
 	end
 	if contains(profile.classes, code) then
-		return false, "Bạn đã ở trong lớp này rồi"
+		return false, "You're already in this class"
 	end
 	if #profile.classes >= Config.MAX_CLASSES_PER_STUDENT then
-		return false, "Bạn đã tham gia tối đa " .. Config.MAX_CLASSES_PER_STUDENT .. " lớp"
+		return false, "You've already joined the maximum of " .. Config.MAX_CLASSES_PER_STUDENT .. " classes"
 	end
 	local joined, reason, lastSeq = nil, nil, 0
 	local ok = self.persistence:update(Config.DATASTORE.classes, classKey(code), function(old)
 		joined, reason, lastSeq = nil, nil, 0
 		if type(old) ~= "table" then
-			reason = "Không tìm thấy lớp với mã " .. code
+			reason = "No class found with code " .. code
 			return nil
 		end
 		if old.teacherId == userId then
-			reason = "Bạn là giáo viên của lớp này"
+			reason = "You're the teacher of this class"
 			return nil
 		end
 		old.members = old.members or {}
 		local key = tostring(userId)
 		if not old.members[key] then
 			if countMembers(old) >= Config.MAX_CLASS_MEMBERS then
-				reason = "Lớp đã đủ học sinh"
+				reason = "This class is full"
 				return nil
 			end
 			old.members[key] = { name = name, joinedAt = self.now() }
@@ -896,10 +896,10 @@ function ClassroomService:joinClass(userId, name, code)
 		return old
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	if not joined then
-		return false, reason or "Không tham gia được lớp"
+		return false, reason or "Couldn't join the class"
 	end
 	table.insert(profile.classes, code)
 	-- sự kiện gán trước lúc vào lớp thì không áp cho HS mới
@@ -914,10 +914,10 @@ function ClassroomService:leaveClass(userId, code)
 	code = normalizeCode(code)
 	local profile = self.sessions:getProfile(userId)
 	if not code or not profile then
-		return false, "Mã lớp không hợp lệ"
+		return false, "Invalid class code"
 	end
 	if not contains(profile.classes, code) then
-		return false, "Bạn không ở trong lớp này"
+		return false, "You're not in this class"
 	end
 	local ok = self.persistence:update(Config.DATASTORE.classes, classKey(code), function(old)
 		if type(old) ~= "table" or not old.members or not old.members[tostring(userId)] then
@@ -927,7 +927,7 @@ function ClassroomService:leaveClass(userId, code)
 		return old
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	for i = #profile.classes, 1, -1 do
 		if profile.classes[i] == code then
@@ -944,7 +944,7 @@ end
 function ClassroomService:getMyClasses(userId)
 	local profile = self.sessions:getProfile(userId)
 	if not profile then
-		return false, "Dữ liệu chưa tải xong, thử lại sau giây lát"
+		return false, "Data is still loading, try again in a moment"
 	end
 	local out = {}
 	for _, code in ipairs(profile.classes) do
@@ -1050,7 +1050,7 @@ function ClassroomService:persistProgress(userId, profile, leaving)
 	end)
 	self.pendingWrites = self.pendingWrites - 1
 	if not ok then
-		print("[EconCity] Lỗi lưu tiến độ lớp: " .. tostring(err))
+		print("[EconCity] Error saving class progress: " .. tostring(err))
 	end
 end
 

@@ -55,11 +55,11 @@ function Persistence.new(options)
 		if ok then
 			self.mode = "datastore"
 		elseif options.allowMemoryFallback then
-			self._log("[EconCity] (Studio) DataStore không khả dụng, dùng bộ nhớ tạm: " .. tostring(lastErr))
+			self._log("[EconCity] (Studio) DataStore unavailable, using memory: " .. tostring(lastErr))
 		else
 			self.mode = "datastore"
 			self.degraded = true
-			self._log("[EconCity] DataStore đang lỗi lúc khởi động, sẽ thử lại cho từng lệnh: " .. tostring(lastErr))
+			self._log("[EconCity] DataStore failed at startup, will retry per call: " .. tostring(lastErr))
 		end
 	end
 	if self.mode == "datastore" and self._mss then
@@ -85,7 +85,7 @@ function Persistence:_retry(fn)
 			self._wait(attempt)
 		end
 	end
-	self._log("[EconCity] Lỗi lưu trữ: " .. tostring(lastErr))
+	self._log("[EconCity] Storage error: " .. tostring(lastErr))
 	return false, lastErr
 end
 

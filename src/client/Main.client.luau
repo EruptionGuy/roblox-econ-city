@@ -85,7 +85,7 @@ local function rescale()
 	for _, fn in ipairs(layoutListeners) do
 		local ok, err = pcall(fn, layout)
 		if not ok then
-			warn("[EconCity] Lỗi bố cục: " .. tostring(err))
+			warn("[EconCity] Layout error: " .. tostring(err))
 		end
 	end
 end
@@ -112,7 +112,7 @@ end
 local function requestOrToast(action, payload)
 	local response = request(action, payload)
 	if not response.ok then
-		toasts.show(response.error or "Không thực hiện được", "error")
+		toasts.show(response.error or "Couldn't do that", "error")
 	end
 	return response
 end
@@ -128,7 +128,7 @@ end
 local function startNewGame()
 	local response = requestOrToast("newGame")
 	if response.ok then
-		toasts.show("Ván mới: xây nhà, chỗ làm, dịch vụ rồi bấm BẮT ĐẦU.", "good")
+		toasts.show("New game: build homes, jobs and services, then press START.", "good")
 	end
 end
 
@@ -138,7 +138,7 @@ local hud = Hud.new(gui, {
 		local starting = s ~= nil and s.status == "PAUSED" and s.month == 0
 		local response = requestOrToast("togglePause")
 		if response.ok and starting then
-			approvalStamp.show("Thành phố mở cửa!", string.format("Bắt đầu nhiệm kỳ %d tháng", s.maxMonths or 24))
+			approvalStamp.show("City is open!", string.format("Your %d-month term begins", s.maxMonths or 24))
 		end
 	end,
 	onNewGame = startNewGame,
@@ -181,10 +181,10 @@ buildPanel = BuildPanel.new(gui, {
 		local built = response.data and response.data.built or 0
 		if built > 0 then
 			local s = State.session()
-			local hint = (s and s.month == 0) and " Bấm BẮT ĐẦU để xem thành phố chạy." or " Vài tháng sau bấm lại để bot xây tiếp."
-			toasts.show(string.format("Bot đã xây %d công trình: đường nối cổng, nhà, chỗ làm, dịch vụ.%s", built, hint), "good")
+			local hint = (s and s.month == 0) and " Press START to watch the city run." or " Press again in a few months to build more."
+			toasts.show(string.format("Buildings added by the bot: %d (roads to the gate, homes, jobs, services).%s", built, hint), "good")
 		else
-			toasts.show("Bot chưa xây thêm được: không đủ tiền (bot giữ lại 2 tháng bảo trì) hoặc hết chỗ.")
+			toasts.show("Bot couldn't build more: not enough money (it keeps 2 months of upkeep) or no space left.")
 		end
 	end,
 })
@@ -204,7 +204,7 @@ detail = Overlays.detailPanel(gui, {
 		task.spawn(function()
 			local response = requestOrToast("demolish", { index = index })
 			if response.ok then
-				toasts.show("Đã phá dỡ, hoàn " .. Util.formatMoneyFull(response.data and response.data.refund or 0))
+				toasts.show("Demolished, refunded " .. Util.formatMoneyFull(response.data and response.data.refund or 0))
 			end
 		end)
 	end,
@@ -271,14 +271,14 @@ local zoomOut = C.button({ Name = "ZoomOut", Text = "−", Font = Theme.FontDisp
 	camera:zoomBy(2)
 end)
 local walkButton
-walkButton = C.button({ Name = "Walk", Text = "Đi dạo", TextSize = 12, Variant = "white", Size = UDim2.fromOffset(104, 40), Radius = 20, LayoutOrder = 3, Parent = camBox }, function()
+walkButton = C.button({ Name = "Walk", Text = "Walk", TextSize = 12, Variant = "white", Size = UDim2.fromOffset(104, 40), Radius = 20, LayoutOrder = 3, Parent = camBox }, function()
 	local mode = camera:toggleMode()
 	cameraMode = mode
 	applyControlMode()
-	walkButton.Text = mode == "overview" and "Đi dạo" or "Toàn cảnh"
+	walkButton.Text = mode == "overview" and "Walk" or "Overview"
 	zoomIn.Visible = mode == "overview"
 	zoomOut.Visible = mode == "overview"
-	toasts.show(mode == "overview" and "Chế độ toàn cảnh" or "Chế độ đi dạo: dùng WASD hoặc cần điều khiển để đi. Muốn xây thì chọn mẫu rồi bấm vào ô.")
+	toasts.show(mode == "overview" and "Overview mode" or "Walk mode: move with WASD or a controller. To build, pick a building and click a tile.")
 end)
 
 -- không cho nút camera đè bảng Xây dựng, thanh chỉ số, joystick, nút nhảy
@@ -421,7 +421,7 @@ task.spawn(function()
 		task.wait(1)
 	end
 	if not State.snapshot then
-		toasts.show("Không kết nối được máy chủ trò chơi. Hãy thử vào lại.", "error")
+		toasts.show("Couldn't reach the game server. Please rejoin.", "error")
 	end
 end)
 
@@ -474,4 +474,4 @@ builder = BuildController.new({
 	isGamepad = C.isGamepadMode,
 })
 
-print("[EconCity] Client sẵn sàng: " .. Theme.StatusText.ACTIVE)
+print("[EconCity] Client ready: " .. Theme.StatusText.ACTIVE)

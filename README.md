@@ -15,16 +15,16 @@ Tài liệu khác:
 
 1. Mở Roblox Studio, chọn File > Open from File > `EconCity.rbxlx`.
 2. Bấm Play (F5).
-3. Chọn công trình ở bảng Xây dựng bên phải rồi bấm vào ô trên bản đồ. Đường thì giữ chuột và kéo. Công trình nào
-   cũng phải có đường nối về ô CỔNG. Xây xong bấm BẮT ĐẦU.
+3. Chọn công trình ở bảng Build bên phải rồi bấm vào ô trên bản đồ. Đường thì giữ chuột và kéo. Công trình nào
+   cũng phải có đường nối về ô GATE. Xây xong bấm START.
 
-Mỗi tháng dài 20 giây. Trong Studio có thêm hai nút để thử nhanh: "Tick ngay" (sang tháng luôn) và "Bot xây mẫu"
+Mỗi tháng dài 20 giây. Trong Studio có thêm hai nút để thử nhanh: "Tick now" (sang tháng luôn) và "Demo build bot"
 (bot tự xây bằng số tiền đang có).
 
 - Thử nhiều người chơi: Test > Clients and Servers, chọn 2 người, bấm Start.
 - Thử màn hình điện thoại: Test > Device.
 
-Khi game chưa publish, dữ liệu chỉ lưu tạm và mất khi tắt game (có dòng vàng "Chế độ thử"). Nếu Studio đã được bật
+Khi game chưa publish, dữ liệu chỉ lưu tạm và mất khi tắt game (có dòng vàng "Test mode"). Nếu Studio đã được bật
 quyền API thì dữ liệu thử ghi vào kho có đuôi `_Studio`, không lẫn với dữ liệu thật của học sinh.
 
 ## Sửa code
@@ -78,7 +78,7 @@ Số liệu nằm ở hai chỗ và phải giống nhau: `src/shared/Config.luau
 
 Chủ game (hoặc chủ Group sở hữu game) luôn là giáo viên kiêm quản trị. Thêm giáo viên khác bằng một trong ba cách:
 
-- Trong game: Lớp học > Quản trị > Thêm giáo viên, nhập tên đăng nhập Roblox.
+- Trong game: Class > Admin > Add teacher, nhập tên đăng nhập Roblox.
 - Thêm UserId vào `TEACHER_USER_IDS` hoặc `ADMIN_USER_IDS` trong `Config.luau`.
 - Đặt `TEACHER_GROUP_ID` và `TEACHER_GROUP_MIN_RANK`: ai trong Group từ cấp đó trở lên là giáo viên.
 
@@ -108,7 +108,7 @@ Trước khi cho học sinh chơi:
 
 ## Xoá dữ liệu khi Roblox yêu cầu
 
-Roblox gửi yêu cầu xoá dữ liệu (Right to be Forgotten) kèm UserId. Vào Quản trị > Xoá dữ liệu, nhập UserId, bấm hai
+Roblox gửi yêu cầu xoá dữ liệu (Right to be Forgotten) kèm UserId. Vào Class > Admin > Delete all data, nhập UserId, bấm hai
 lần. Lệnh này xoá dữ liệu của người đó ở tất cả các kho sau:
 
 | Kho | Key | Nội dung |

@@ -82,14 +82,14 @@ function Modals.leaderboard(gui, ctx)
 				C.shadowStroke(1, 0.88).Parent = b
 			end
 		end
-		tab("TabGlobal", "Toàn cầu", "global", 1)
-		tab("TabClass", "Lớp của tôi", "class", 2)
+		tab("TabGlobal", "Global", "global", 1)
+		tab("TabClass", "My class", "class", 2)
 		local codes = classCodes()
 		if scope == "class" and #codes > 1 then
 			if classIndex > #codes then
 				classIndex = 1
 			end
-			C.button({ Text = "Lớp: " .. codes[classIndex] .. "  ›", Variant = "white", Size = UDim2.fromOffset(150, 36), ZIndex = 54, LayoutOrder = 3, Parent = tabRow }, function()
+			C.button({ Text = "Class: " .. codes[classIndex] .. "  ›", Variant = "white", Size = UDim2.fromOffset(150, 36), ZIndex = 54, LayoutOrder = 3, Parent = tabRow }, function()
 				classIndex = classIndex % #codes + 1
 				task.spawn(refresh)
 			end)
@@ -102,12 +102,12 @@ function Modals.leaderboard(gui, ctx)
 		local myToken = requestToken -- chỉ hiện kết quả của lần bấm mới nhất, bỏ response cũ về trễ
 		modal.clear()
 		renderHeader()
-		local status = C.label({ Text = "Đang tải...", TextSize = 12, Color = Colors.textMuted, LayoutOrder = 1, ZIndex = 53, Parent = modal.body })
+		local status = C.label({ Text = "Loading...", TextSize = 12, Color = Colors.textMuted, LayoutOrder = 1, ZIndex = 53, Parent = modal.body })
 		local payload = { scope = scope }
 		if scope == "class" then
 			local codes = classCodes()
 			if #codes == 0 then
-				status.Text = "Bạn chưa thuộc lớp nào."
+				status.Text = "You're not in a class yet."
 				return
 			end
 			payload.code = codes[math.min(classIndex, #codes)]
@@ -119,13 +119,13 @@ function Modals.leaderboard(gui, ctx)
 			return
 		end
 		if not response.ok then
-			status.Text = response.error or "Không tải được bảng xếp hạng"
+			status.Text = response.error or "Couldn't load the leaderboard"
 			status.TextColor3 = Colors.bad
 			return
 		end
 		local data = response.data or {}
 		local rows = data.rows or {}
-		status.Text = "Điểm = số dân có việc × hạnh phúc / 100 + ngân sách / 100. Mỗi người giữ điểm cao nhất. Bảng cập nhật sau mỗi 2 lượt."
+		status.Text = "Score = employed residents × happiness / 100 + budget / 100. Everyone keeps their best score. The board updates every 2 months."
 		status.TextWrapped = true
 		status.Size = UDim2.new(1, 0, 0, 34)
 		local meShown = false
@@ -134,16 +134,16 @@ function Modals.leaderboard(gui, ctx)
 			meShown = meShown or r.isMe
 		end
 		if #rows == 0 then
-			C.label({ Text = "Chưa có dữ liệu xếp hạng.", TextSize = 13, Color = Colors.textDim, LayoutOrder = 5, ZIndex = 53, Parent = modal.body })
+			C.label({ Text = "No rankings yet.", TextSize = 13, Color = Colors.textDim, LayoutOrder = 5, ZIndex = 53, Parent = modal.body })
 		end
 		-- dòng "Bạn" luôn hiện ở cuối, chưa lọt top cũng hiện
 		local me = data.me
 		if me and not meShown then
 			local text
 			if me.ranked == false then
-				text = "Bạn (chơi thử trong Studio, không tính xếp hạng)"
+				text = "You (Studio test play, not ranked)"
 			else
-				text = "Bạn (chưa vào top " .. tostring(#rows > 0 and #rows or 20) .. ")"
+				text = "You (not in the top " .. tostring(#rows > 0 and #rows or 20) .. ")"
 			end
 			local best = math.max(me.bestScore or 0, me.currentScore or 0)
 			local r = C.well({ Color = Colors.accentSoft, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 100, ZIndex = 53, Parent = modal.body })
@@ -153,7 +153,7 @@ function Modals.leaderboard(gui, ctx)
 		end
 	end
 
-	modal = C.modal({ Name = "LeaderboardModal", Title = "Bảng xếp hạng", Size = UDim2.fromOffset(560, 500), Parent = gui, onOpen = function()
+	modal = C.modal({ Name = "LeaderboardModal", Title = "Leaderboard", Size = UDim2.fromOffset(560, 500), Parent = gui, onOpen = function()
 		scope = "global" -- mở lại luôn về bảng toàn cầu
 		task.spawn(refresh)
 	end })
@@ -169,7 +169,7 @@ local function barChart(parent, order, title, values, formatter, colorFn, months
 	C.label({ Text = title, Font = Theme.FontDisplay, TextSize = 14, Size = UDim2.new(0.5, 0, 0, 22), Position = UDim2.fromOffset(14, 8), ZIndex = 54, Parent = holder })
 	local plot = C.new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, -28, 1, -58), Position = UDim2.fromOffset(14, 36), ZIndex = 54, Parent = holder })
 	if #values == 0 then
-		C.label({ Text = "Chưa có dữ liệu, đợi hết tháng đầu tiên.", TextSize = 12, Color = Colors.textDim, Size = UDim2.fromScale(1, 1), XAlign = Enum.TextXAlignment.Center, ZIndex = 55, Parent = plot })
+		C.label({ Text = "No data yet, wait for the first month to end.", TextSize = 12, Color = Colors.textDim, Size = UDim2.fromScale(1, 1), XAlign = Enum.TextXAlignment.Center, ZIndex = 55, Parent = plot })
 		return
 	end
 	local maxV, minV = 0, 0
@@ -203,11 +203,11 @@ local function barChart(parent, order, title, values, formatter, colorFn, months
 			C.stroke(Colors.text, 1.5, 0.75).Parent = bar -- cột mới nhất
 		end
 		if i == 1 or i % labelEvery == 0 then
-			C.label({ Text = "T" .. i, Font = Theme.FontMedium, TextSize = 10, Color = Colors.textMuted, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(slot, 0, 0, 14), Position = UDim2.new(slot * (i - 1), 0, 1, 4), ZIndex = 55, Parent = plot })
+			C.label({ Text = "M" .. i, Font = Theme.FontMedium, TextSize = 10, Color = Colors.textMuted, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(slot, 0, 0, 14), Position = UDim2.new(slot * (i - 1), 0, 1, 4), ZIndex = 55, Parent = plot })
 		end
 	end
 	local summary = C.pill({
-		Text = "Cao nhất " .. formatter(math.max(table.unpack(values))) .. "   |   Mới nhất " .. formatter(values[#values]),
+		Text = "Highest " .. formatter(math.max(table.unpack(values))) .. "   |   Latest " .. formatter(values[#values]),
 		Font = Theme.FontBold,
 		TextSize = 11,
 		Color = Colors.panel,
@@ -225,19 +225,19 @@ local function pastGamesList(parent, order, pastSessions)
 	local holder = C.well({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Radius = Theme.Radius.lg, LayoutOrder = order, ZIndex = 53, Parent = parent })
 	C.padding(12, 14).Parent = holder
 	C.list(Enum.FillDirection.Vertical, 6).Parent = holder
-	C.label({ Text = "Các ván đã chơi", Font = Theme.FontDisplay, TextSize = 14, LayoutOrder = 0, ZIndex = 54, Parent = holder })
+	C.label({ Text = "Past games", Font = Theme.FontDisplay, TextSize = 14, LayoutOrder = 0, ZIndex = 54, Parent = holder })
 	if #pastSessions == 0 then
-		C.label({ Text = "Chưa có ván nào kết thúc.", TextSize = 12, Color = Colors.textDim, LayoutOrder = 1, ZIndex = 54, Parent = holder })
+		C.label({ Text = "No finished games yet.", TextSize = 12, Color = Colors.textDim, LayoutOrder = 1, ZIndex = 54, Parent = holder })
 		return
 	end
 	for i, p in ipairs(pastSessions) do
 		if i > 10 then
 			break
 		end
-		local statusText = (p.status == "ENDED" and "Thắng") or (p.status == "FAILED" and "Thất bại") or "Bỏ dở"
+		local statusText = (p.status == "ENDED" and "Won") or (p.status == "FAILED" and "Failed") or "Abandoned"
 		local color = (p.status == "ENDED" and Colors.good) or (p.status == "FAILED" and Colors.bad) or Colors.textDim
 		C.label({
-			Text = string.format("%s • tháng %d/%d • ngân sách %s • dân %s • hạnh phúc %d • điểm %s",
+			Text = string.format("%s • month %d/%d • budget %s • population %s • happiness %d • score %s",
 				statusText, p.month or 0, p.maxMonths or 24, Util.formatMoneyFull(p.budget or 0), Util.formatInt(p.population or 0),
 				Util.round(p.happiness or 0), Util.formatInt(p.prosperityScore or 0)),
 			Font = Theme.FontMedium,
@@ -269,29 +269,29 @@ function Modals.history(gui, ctx)
 			table.insert(employment, h.employment or 0)
 			table.insert(population, h.population or 0)
 		end
-		barChart(modal.body, 1, "Ngân sách", budgets, Util.formatMoneyFull, function(v)
+		barChart(modal.body, 1, "Budget", budgets, Util.formatMoneyFull, function(v)
 			return v >= 0 and Colors.gold or Colors.bad
 		end, months)
-		barChart(modal.body, 2, "Doanh thu của doanh nghiệp", revenue, Util.formatMoneyK, function()
+		barChart(modal.body, 2, "Business revenue", revenue, Util.formatMoneyK, function()
 			return Colors.jobs
 		end, months)
-		barChart(modal.body, 3, "Hạnh phúc", happiness, function(v)
+		barChart(modal.body, 3, "Happiness", happiness, function(v)
 			return tostring(Util.round(v))
 		end, function(v)
 			return Theme.happinessColor(v)
 		end, months)
-		barChart(modal.body, 4, "Tỉ lệ việc làm", employment, function(v)
+		barChart(modal.body, 4, "Employment rate", employment, function(v)
 			return string.format("%d%%", Util.round(v))
 		end, function(v)
 			return (v < 80 and Colors.amber) or Colors.success
 		end, months)
-		barChart(modal.body, 5, "Dân số", population, function(v)
+		barChart(modal.body, 5, "Population", population, function(v)
 			return Util.formatInt(v)
 		end, function()
 			return Colors.people
 		end, months)
 		C.label({
-			Text = "Thuế thành phố thu = doanh thu × thuế suất. Thuế cao thu được nhiều hơn mỗi đồng doanh thu, nhưng dân kém vui nên ít người đến làm việc. Xem doanh thu, hạnh phúc và dân số cùng lúc để thấy điều đó.",
+			Text = "City tax = revenue × tax rate. A higher rate brings in more from each dollar, but it makes residents unhappy, so fewer people move in to work. Compare revenue, happiness and population to see the trade-off.",
 			TextSize = 12,
 			Color = Colors.textDim,
 			Wrapped = true,
@@ -304,7 +304,7 @@ function Modals.history(gui, ctx)
 		pastGamesList(modal.body, 7, (snap and snap.profile and snap.profile.pastSessions) or {})
 		modal.body.CanvasPosition = scroll -- giữ chỗ đang cuộn khi vẽ lại mỗi lượt
 	end
-	modal = C.modal({ Name = "HistoryModal", Title = "Lịch sử thành phố", Size = UDim2.fromOffset(580, 580), Parent = gui, onOpen = render })
+	modal = C.modal({ Name = "HistoryModal", Title = "City history", Size = UDim2.fromOffset(580, 580), Parent = gui, onOpen = render })
 	Icons.badge("chart", { Size = 30, IconSize = 15, Color = Colors.accent, Soft = Colors.accentSoft, Square = true, Position = UDim2.fromOffset(22, 14), ZIndex = 52, Parent = modal.card })
 	modal.card:FindFirstChild("Title").Position = UDim2.fromOffset(62, 0)
 	-- chỉ vẽ lại khi có data mới (tick, ván mới, init), không theo đồng hồ

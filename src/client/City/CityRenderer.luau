@@ -278,7 +278,7 @@ function CityRenderer:_buildStatic()
 	text.Font = Enum.Font.BuilderSansExtraBold
 	text.TextSize = 13
 	text.Size = UDim2.fromScale(1, 1)
-	text.Text = "CỔNG"
+	text.Text = "GATE"
 	text.Parent = billboard
 	local tagCorner = Instance.new("UICorner")
 	tagCorner.CornerRadius = UDim.new(1, 0)

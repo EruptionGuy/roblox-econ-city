@@ -6,38 +6,38 @@ local Scenarios = {}
 Scenarios.CATALOG = {
 	{
 		id = "recession",
-		name = "Suy thoái kinh tế",
+		name = "Recession",
 		kind = "recession",
 		severity = 6,
 		durationMonths = 4,
-		description = "Người dân thắt lưng buộc bụng: doanh thu của mọi cửa hàng, nhà máy, văn phòng chỉ còn 70%.",
+		description = "People tighten their belts: revenue at every shop, factory and office drops to 70%.",
 		effects = { revenueMultiplier = 0.7 },
 	},
 	{
 		id = "supply",
-		name = "Đứt gãy chuỗi cung ứng",
+		name = "Supply chain breakdown",
 		kind = "supply",
 		severity = 5,
 		durationMonths = 4,
-		description = "Nhà máy chỉ giao được một nửa số hàng: shop thiếu hàng để bán.",
+		description = "Factories deliver only half their goods: shops run short of things to sell.",
 		effects = { goodsMultiplier = 0.5 },
 	},
 	{
 		id = "pandemic",
-		name = "Đại dịch",
+		name = "Pandemic",
 		kind = "pandemic",
 		severity = 8,
 		durationMonths = 6,
-		description = "Dịch bệnh lan rộng: mỗi tháng 2% dân rời thành phố, hạnh phúc giảm 10 điểm.",
+		description = "A disease spreads: 2% of residents leave each month and happiness drops 10 points.",
 		effects = { leaveRate = 0.02, happinessPenalty = -10 },
 	},
 	{
 		id = "prices",
-		name = "Bão giá vật liệu",
+		name = "Material price shock",
 		kind = "prices",
 		severity = 5,
 		durationMonths = 5,
-		description = "Giá vật liệu tăng vọt: xây mới đắt gấp 1,5 lần, chi phí bảo trì tăng 30%.",
+		description = "Material prices soar: new buildings cost 1.5 times as much and upkeep rises 30%.",
 		effects = { priceMultiplier = 1.5, maintenanceMultiplier = 1.3 },
 	},
 }
@@ -63,12 +63,12 @@ Scenarios.EFFECT_RULES = {
 
 -- kịch bản giáo viên tự tạo: cùng 6 hiệu ứng, kẹp trong khoảng an toàn
 Scenarios.CUSTOM_EFFECTS = {
-	{ key = "revenueMultiplier", label = "Hệ số doanh thu", min = 0.5, max = 1, step = 0.05, default = 1, kind = "multiplier" },
-	{ key = "maintenanceMultiplier", label = "Hệ số chi phí bảo trì", min = 1, max = 2, step = 0.1, default = 1, kind = "multiplier" },
-	{ key = "priceMultiplier", label = "Hệ số giá xây", min = 1, max = 2, step = 0.1, default = 1, kind = "multiplier" },
-	{ key = "goodsMultiplier", label = "Hệ số hàng hoá cho shop", min = 0.2, max = 1, step = 0.1, default = 1, kind = "multiplier" },
-	{ key = "happinessPenalty", label = "Thay đổi hạnh phúc (điểm)", min = -30, max = 0, step = 1, default = 0, kind = "number" },
-	{ key = "leaveRate", label = "Dân bỏ đi mỗi tháng", min = 0, max = 0.05, step = 0.005, default = 0, kind = "percent" },
+	{ key = "revenueMultiplier", label = "Revenue multiplier", min = 0.5, max = 1, step = 0.05, default = 1, kind = "multiplier" },
+	{ key = "maintenanceMultiplier", label = "Upkeep multiplier", min = 1, max = 2, step = 0.1, default = 1, kind = "multiplier" },
+	{ key = "priceMultiplier", label = "Build price multiplier", min = 1, max = 2, step = 0.1, default = 1, kind = "multiplier" },
+	{ key = "goodsMultiplier", label = "Shop goods multiplier", min = 0.2, max = 1, step = 0.1, default = 1, kind = "multiplier" },
+	{ key = "happinessPenalty", label = "Happiness change (points)", min = -30, max = 0, step = 1, default = 0, kind = "number" },
+	{ key = "leaveRate", label = "Residents leaving per month", min = 0, max = 0.05, step = 0.005, default = 0, kind = "percent" },
 }
 
 local function clampStep(value, field)
@@ -83,7 +83,7 @@ end
 -- chuẩn hoá kịch bản client gửi lên. tên/mô tả thì server lọc riêng
 function Scenarios.sanitizeCustom(input)
 	if type(input) ~= "table" then
-		return nil, "Dữ liệu kịch bản không hợp lệ"
+		return nil, "Invalid scenario data"
 	end
 	local severity = tonumber(input.severity) or 5
 	local duration = tonumber(input.durationMonths) or 3
@@ -98,7 +98,7 @@ function Scenarios.sanitizeCustom(input)
 		end
 	end
 	if not any then
-		return nil, "Kịch bản cần ít nhất một hiệu ứng"
+		return nil, "A scenario needs at least one effect"
 	end
 	return {
 		severity = math.max(1, math.min(10, math.floor(severity + 0.5))),

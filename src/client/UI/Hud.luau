@@ -63,7 +63,7 @@ function Hud.new(gui, ctx)
 		C.corner(2).Parent = bar
 	end
 	C.label({ Name = "Name", Text = "Econ City", Font = Theme.FontDisplay, TextSize = 20, Size = UDim2.fromOffset(LEFT_W - 76, 24), Position = UDim2.fromOffset(70, 11), Parent = stats })
-	obj.month = C.label({ Name = "Month", Text = "Tháng 0 / 24", Font = Theme.FontMedium, TextSize = 12, Color = Colors.textDim, Size = UDim2.fromOffset(LEFT_W - 76, 16), Position = UDim2.fromOffset(70, 35), Parent = stats })
+	obj.month = C.label({ Name = "Month", Text = "Month 0 / 24", Font = Theme.FontMedium, TextSize = 12, Color = Colors.textDim, Size = UDim2.fromOffset(LEFT_W - 76, 16), Position = UDim2.fromOffset(70, 35), Parent = stats })
 	local monthTrack = C.new("Frame", { Name = "MonthBar", BackgroundColor3 = Colors.track, BorderSizePixel = 0, Size = UDim2.fromOffset(LEFT_W - 82, 6), Position = UDim2.fromOffset(70, 56), Parent = stats })
 	C.round().Parent = monthTrack
 	obj.monthFill = C.new("Frame", { Name = "Fill", BackgroundColor3 = Colors.panel, BorderSizePixel = 0, Size = UDim2.fromScale(0, 1), Parent = monthTrack })
@@ -71,10 +71,10 @@ function Hud.new(gui, ctx)
 	C.gradient(Colors.accent, Colors.violet, 0).Parent = obj.monthFill
 
 	local specs = {
-		{ name = "Stat_NGÂN SÁCH", title = "Ngân sách", icon = "coin", color = Colors.gold },
-		{ name = "Stat_DÂN SỐ", title = "Dân số", icon = "people", color = Colors.people },
-		{ name = "Stat_VIỆC LÀM", title = "Việc làm", icon = "briefcase", color = Colors.jobs },
-		{ name = "Stat_HẠNH PHÚC", title = "Hạnh phúc", icon = "face", color = Colors.good },
+		{ name = "Stat_BUDGET", title = "Budget", icon = "coin", color = Colors.gold },
+		{ name = "Stat_POPULATION", title = "Population", icon = "people", color = Colors.people },
+		{ name = "Stat_EMPLOYMENT", title = "Employment", icon = "briefcase", color = Colors.jobs },
+		{ name = "Stat_HAPPINESS", title = "Happiness", icon = "face", color = Colors.good },
 	}
 	local x = LEFT_W
 	obj.budget, obj.budgetSub = statTile(stats, x, specs[1])
@@ -86,7 +86,7 @@ function Hud.new(gui, ctx)
 	local happyTile
 	obj.happiness, obj.happinessSub, obj.happyIcon, happyTile = statTile(stats, x, specs[4])
 	obj.happyBadge = happyTile:FindFirstChild("Badge")
-	obj.happinessSub.Text = "≥ 50: dân đến"
+	obj.happinessSub.Text = "50+: people move in"
 
 	-- nhãn vai trò giáo viên / cảnh báo lưu dữ liệu, học sinh thường không thấy
 	obj.modeBadge = C.pill({ Name = "ModeBadge", Text = "", TextSize = 11, Color = Colors.goldSoft, TextColor = Colors.warn, Height = 24, Position = UDim2.fromOffset(14, BLOCK_H + 18), Parent = gui })
@@ -115,13 +115,13 @@ function Hud.new(gui, ctx)
 	local statusCell = C.well({ Name = "Status", Size = UDim2.fromOffset(118, 44), LayoutOrder = nextOrder(), Parent = bar })
 	obj.statusDot = C.new("Frame", { Name = "Dot", BackgroundColor3 = Colors.good, BorderSizePixel = 0, Size = UDim2.fromOffset(8, 8), Position = UDim2.fromOffset(12, 10), Parent = statusCell })
 	C.round().Parent = obj.statusDot
-	obj.statusText = C.label({ Name = "StatusText", Text = "Đang tải", Font = Theme.FontBold, TextSize = 12, Truncate = true, Size = UDim2.new(1, -32, 0, 18), Position = UDim2.fromOffset(26, 5), Parent = statusCell })
+	obj.statusText = C.label({ Name = "StatusText", Text = "Loading", Font = Theme.FontBold, TextSize = 12, Truncate = true, Size = UDim2.new(1, -32, 0, 18), Position = UDim2.fromOffset(26, 5), Parent = statusCell })
 	obj.countdown = C.label({ Name = "Countdown", Text = "", Font = Theme.FontMedium, TextSize = 11, Color = Colors.textDim, Size = UDim2.new(1, -24, 0, 16), Position = UDim2.fromOffset(12, 23), Parent = statusCell })
 	obj.statusCell = statusCell
 
 	obj.pauseButton = C.button({
 		Name = "Pause",
-		Text = "TẠM DỪNG",
+		Text = "PAUSE",
 		Variant = "success",
 		Font = Theme.FontDisplay,
 		TextSize = 15,
@@ -151,7 +151,7 @@ function Hud.new(gui, ctx)
 		pauseIcon = Icons.draw(name, { Size = 18, Color = Colors.onAccent, Position = UDim2.new(0, -12, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5), Parent = obj.pauseButton })
 	end
 
-	obj.tickNowButton = C.button({ Name = "TickNow", Text = "Tick ngay", Variant = "secondary", TextSize = 12, Size = UDim2.fromOffset(98, 44), PadLeft = 22, LayoutOrder = nextOrder(), Parent = bar }, ctx.onTickNow)
+	obj.tickNowButton = C.button({ Name = "TickNow", Text = "Tick now", Variant = "secondary", TextSize = 12, Size = UDim2.fromOffset(98, 44), PadLeft = 22, LayoutOrder = nextOrder(), Parent = bar }, ctx.onTickNow)
 	Icons.draw("forward", { Size = 14, Color = Colors.accent, Position = UDim2.new(0, -8, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5), Parent = obj.tickNowButton })
 	obj.tickNowButton.Visible = false
 
@@ -164,10 +164,10 @@ function Hud.new(gui, ctx)
 		navIcons[b] = Icons.draw(icon, { Size = 18, Color = Colors.textDim, Position = UDim2.new(0.5, 0, 0, 4), AnchorPoint = Vector2.new(0.5, 0), Parent = b })
 		return b
 	end
-	obj.historyButton = navButton("History", "Lịch sử", "chart", ctx.onHistory)
-	obj.leaderboardButton = navButton("Leaderboard", "Xếp hạng", "podium", ctx.onLeaderboard)
-	obj.classButton = navButton("Class", "Lớp học", "people", ctx.onClass)
-	obj.panelToggle = navButton("PanelToggle", "Ẩn bảng", "grid", ctx.onTogglePanel)
+	obj.historyButton = navButton("History", "History", "chart", ctx.onHistory)
+	obj.leaderboardButton = navButton("Leaderboard", "Ranking", "podium", ctx.onLeaderboard)
+	obj.classButton = navButton("Class", "Class", "people", ctx.onClass)
+	obj.panelToggle = navButton("PanelToggle", "Hide", "grid", ctx.onTogglePanel)
 
 	local lastMonth = nil
 	function obj.update(snap)
@@ -177,7 +177,7 @@ function Hud.new(gui, ctx)
 		end
 		local animate = lastMonth ~= nil and lastMonth ~= s.month
 		lastMonth = s.month
-		obj.month.Text = string.format("Tháng %d / %d", s.month, s.maxMonths)
+		obj.month.Text = string.format("Month %d / %d", s.month, s.maxMonths)
 		local progress = s.maxMonths > 0 and math.clamp(s.month / s.maxMonths, 0, 1) or 0
 		TweenService:Create(obj.monthFill, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.fromScale(progress, 1) }):Play()
 		setValue(obj.budget, Util.formatMoneyFull(s.budget), animate)
@@ -200,23 +200,23 @@ function Hud.new(gui, ctx)
 		obj.finished = finished
 		obj.status = s.status
 		obj.notStarted = s.status == "PAUSED" and s.month == 0
-		obj.statusText.Text = obj.notStarted and "Chưa chạy" or (Theme.StatusTitle[s.status] or s.status)
+		obj.statusText.Text = obj.notStarted and "Not started" or (Theme.StatusTitle[s.status] or s.status)
 		obj.statusDot.BackgroundColor3 = obj.notStarted and Colors.textMuted or Theme.statusColor(s.status)
 		obj.renderPauseText()
 		obj.tickNowButton.Visible = snap.isStudio == true and not obj.compact
 		C.setEnabled(obj.tickNowButton, s.status == "ACTIVE")
 
-		local role = (snap.isOwner and "Chủ game") or (snap.isTeacher and "Giáo viên") or nil
+		local role = (snap.isOwner and "Owner") or (snap.isTeacher and "Teacher") or nil
 		local parts = { role }
 		local color, bg = Colors.textDim, Colors.panel
 		if snap.inPrivateRoom then
-			table.insert(parts, "Phòng học riêng")
+			table.insert(parts, "Private classroom")
 		end
 		if snap.saveDisabled then
-			table.insert(parts, "Không lưu được tiến độ, hãy thoát ra rồi vào lại game")
+			table.insert(parts, "Progress can't be saved, please leave and rejoin")
 			color, bg = Colors.bad, soft(Colors.bad)
 		elseif snap.persistence == "memory" then
-			table.insert(parts, "Chế độ thử: dữ liệu chỉ lưu tạm trong server này")
+			table.insert(parts, "Test mode: data is only kept on this server")
 			color, bg = Colors.warn, Colors.goldSoft
 		end
 		obj.modeBadge.Text = table.concat(parts, " | ")
@@ -227,22 +227,22 @@ function Hud.new(gui, ctx)
 
 	-- net = thu chi dự kiến mỗi tháng, Main tính bằng CityEngine
 	function obj.setNet(net, capacity, jobs)
-		obj.budgetSub.Text = string.format("%s%s/th", net >= 0 and "+" or "", Util.formatMoneyFull(net))
+		obj.budgetSub.Text = string.format("%s%s/mo", net >= 0 and "+" or "", Util.formatMoneyFull(net))
 		obj.budgetSub.TextColor3 = net >= 0 and Colors.good or Colors.bad
-		obj.populationSub.Text = "/ " .. Util.formatInt(capacity) .. " chỗ ở"
-		obj.employmentSub.Text = Util.formatInt(jobs) .. " chỗ làm"
+		obj.populationSub.Text = "/ " .. Util.formatInt(capacity) .. " homes"
+		obj.employmentSub.Text = Util.formatInt(jobs) .. " jobs"
 	end
 
 	function obj.renderPauseText()
 		local text, variantColor, icon
 		if obj.finished then
-			text, variantColor, icon = "VÁN MỚI", Colors.accent, "play" -- đóng màn hình kết thúc rồi vẫn chơi lại được
+			text, variantColor, icon = "NEW GAME", Colors.accent, "play" -- đóng màn hình kết thúc rồi vẫn chơi lại được
 		elseif obj.notStarted then
-			text, variantColor, icon = "BẮT ĐẦU", Colors.success, "play"
+			text, variantColor, icon = "START", Colors.success, "play"
 		elseif obj.status == "PAUSED" then
-			text, variantColor, icon = "CHẠY TIẾP", Colors.success, "play"
+			text, variantColor, icon = "RESUME", Colors.success, "play"
 		else
-			text, variantColor, icon = "TẠM DỪNG", Colors.amber, "pause"
+			text, variantColor, icon = "PAUSE", Colors.amber, "pause"
 		end
 		obj.pauseButton.Text = text
 		if obj.pauseButton:GetAttribute("BaseColor") ~= variantColor then
@@ -260,9 +260,9 @@ function Hud.new(gui, ctx)
 		obj.countdown.Size = compact and UDim2.new(1, -16, 0, 16) or UDim2.new(1, -24, 0, 16)
 		obj.countdown.TextXAlignment = compact and Enum.TextXAlignment.Center or Enum.TextXAlignment.Left
 		obj.statusDot.Visible = not compact
-		obj.leaderboardButton.Text = compact and "Hạng" or "Xếp hạng"
-		obj.classButton.Text = compact and "Lớp" or "Lớp học"
-		obj.panelToggle.Text = compact and "Xây" or (obj.panelVisible and "Ẩn bảng" or "Xây dựng")
+		obj.leaderboardButton.Text = compact and "Rank" or "Ranking"
+		obj.classButton.Text = compact and "Class" or "Class"
+		obj.panelToggle.Text = compact and "Build" or (obj.panelVisible and "Hide" or "Build")
 		for _, sub in ipairs(obj.subs) do
 			sub.Visible = not compact
 		end
@@ -282,22 +282,22 @@ function Hud.new(gui, ctx)
 		b.TextColor3 = visible and Colors.accent or Colors.textDim
 		Icons.setColor(navIcons[b], visible and Colors.accent or Colors.textDim)
 		if not obj.compact then
-			b.Text = visible and "Ẩn bảng" or "Xây dựng"
+			b.Text = visible and "Hide" or "Build"
 		end
 	end
 
 	function obj.updateCountdown(snap, serverNow)
 		local s = snap and snap.session
 		if s and (s.status == "ENDED" or s.status == "FAILED") then
-			obj.countdown.Text = "Hết ván"
+			obj.countdown.Text = "Game over"
 			return
 		end
 		if not s or s.status ~= "ACTIVE" then
-			obj.countdown.Text = string.format("%ds / tháng", Config.TICK_SECONDS)
+			obj.countdown.Text = string.format("%ds / month", Config.TICK_SECONDS)
 			return
 		end
 		local remaining = math.max(0, math.ceil((snap.nextTickAt or 0) - serverNow))
-		obj.countdown.Text = string.format("còn %ds", remaining)
+		obj.countdown.Text = string.format("%ds left", remaining)
 	end
 
 	setPauseIcon("play")

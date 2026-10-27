@@ -179,7 +179,7 @@ end
 function SessionService:clientReady(userId)
 	local profile = self.profiles[userId]
 	if not profile or not profile.session then
-		return false, "Dữ liệu chưa tải xong, thử lại sau giây lát"
+		return false, "Data is still loading, try again in a moment"
 	end
 	local session = profile.session
 	if session.waitingForClient then
@@ -268,7 +268,7 @@ function SessionService:requestSave(userId, final)
 				self:_write(userId, st.profile, st.final)
 			end)
 			if not ok then
-				print("[EconCity] Lỗi lưu hồ sơ " .. tostring(userId) .. ": " .. tostring(err))
+				print("[EconCity] Error saving profile " .. tostring(userId) .. ": " .. tostring(err))
 			end
 		until not st.again
 		st.running = false
@@ -397,11 +397,11 @@ local CITY_ACTIONS = {
 function SessionService:act(userId, action, a, b)
 	local profile = self.profiles[userId]
 	if not profile or not profile.session then
-		return false, "Chưa có ván chơi"
+		return false, "No game in progress"
 	end
 	local fn = CITY_ACTIONS[action]
 	if not fn then
-		return false, "Hành động không hợp lệ"
+		return false, "Invalid action"
 	end
 	return fn(profile.session, a, b)
 end
@@ -410,10 +410,10 @@ end
 function SessionService:demoBuild(userId)
 	local profile = self.profiles[userId]
 	if not profile or not profile.session then
-		return false, "Chưa có ván chơi"
+		return false, "No game in progress"
 	end
 	if GameTick.isFinished(profile.session) then
-		return false, "Ván đã kết thúc, hãy bắt đầu ván mới"
+		return false, "This game has ended, start a new one"
 	end
 	return true, { built = DemoBot.act(profile.session, DemoBot.SHOWCASE) }
 end
@@ -421,12 +421,12 @@ end
 function SessionService:togglePause(userId)
 	local profile = self.profiles[userId]
 	if not profile or not profile.session then
-		return false, "Chưa có ván chơi"
+		return false, "No game in progress"
 	end
 	local session = profile.session
 	if GameTick.isFinished(session) then
 		-- không cho "hồi sinh" phiên đã xong bằng nút pause
-		return false, "Ván đã kết thúc"
+		return false, "This game has ended"
 	end
 	if session.status == GameTick.STATUS.ACTIVE then
 		session.status = GameTick.STATUS.PAUSED
@@ -461,7 +461,7 @@ end
 function SessionService:newGame(userId)
 	local profile = self.profiles[userId]
 	if not profile then
-		return false, "Dữ liệu chưa tải xong, thử lại sau giây lát"
+		return false, "Data is still loading, try again in a moment"
 	end
 	local old = profile.session
 	-- ván chưa qua tháng nào thì không vào lịch sử
@@ -476,7 +476,7 @@ end
 function SessionService:addScenario(userId, scenarioId, meta, customDef)
 	local profile = self.profiles[userId]
 	if not profile or not profile.session then
-		return false, "Chưa có ván chơi"
+		return false, "No game in progress"
 	end
 	return GameTick.addScenario(profile.session, scenarioId, meta, customDef)
 end
@@ -527,7 +527,7 @@ function SessionService:tickAll()
 				self:requestSave(userId, false)
 			end
 		else
-			print("[EconCity] Lỗi khi tick người chơi " .. tostring(userId) .. ": " .. tostring(result))
+			print("[EconCity] Error ticking player " .. tostring(userId) .. ": " .. tostring(result))
 		end
 	end
 	return results

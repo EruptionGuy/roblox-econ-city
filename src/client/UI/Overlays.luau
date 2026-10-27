@@ -47,10 +47,10 @@ function Overlays.cityBar(gui)
 
 	local cards = {}
 	local specs = {
-		{ "population", "Muốn đến", "people", Colors.people },
-		{ "jobs", "Chỗ làm có người", "briefcase", Colors.jobs },
-		{ "service", "Dịch vụ", "heart", Colors.mood },
-		{ "goods", "Hàng cho shop", "box", Colors.amber },
+		{ "population", "Moving in", "people", Colors.people },
+		{ "jobs", "Jobs filled", "briefcase", Colors.jobs },
+		{ "service", "Services", "heart", Colors.mood },
+		{ "goods", "Shop goods", "box", Colors.amber },
 	}
 	for i, t in ipairs(specs) do
 		local card = C.panel({ Name = "Card_" .. t[1], Size = UDim2.fromOffset(CELL_W, 62), Radius = Theme.Radius.lg, LayoutOrder = i, Parent = bar })
@@ -72,16 +72,16 @@ function Overlays.cityBar(gui)
 		end
 		local d = CityEngine.compute(s, s.population)
 		local target = CityEngine.targetPop(d.C, d.J, s.happiness)
-		cards.population.value.Text = Util.formatInt(target) .. " người"
-		cards.population.sub.Text = "tối đa " .. Util.formatInt(d.C) .. " chỗ ở"
+		cards.population.value.Text = Util.formatInt(target)
+		cards.population.sub.Text = "max " .. Util.formatInt(d.C) .. " homes"
 		-- đếm số chỗ làm có người, không dùng %: đặt cạnh "Việc làm 100%" của dân nhìn như mâu thuẫn
 		cards.jobs.value.Text = Util.formatInt(d.emp) .. " / " .. Util.formatInt(d.J)
-		cards.jobs.sub.Text = "chỗ làm đã có người"
+		cards.jobs.sub.Text = "workers / jobs"
 		cards.service.value.Text = s.population > 0 and tostring(Util.round(d.S)) or "—"
-		cards.service.sub.Text = "phục vụ " .. Util.formatInt(d.pts * Config.FORMULA.residentsPerPoint) .. " người"
+		cards.service.sub.Text = "serves " .. Util.formatInt(d.pts * Config.FORMULA.residentsPerPoint) .. " people"
 		cards.goods.value.Text = d.slots.shop > 0 and string.format("%d%%", Util.round(d.G * 100)) or "—"
 		cards.goods.value.TextColor3 = (d.slots.shop > 0 and d.G < Config.CRISIS.goodsBelow) and Colors.warn or Colors.text
-		cards.goods.sub.Text = string.format("%d chỗ CN / %d chỗ TM", d.slots.factory, d.slots.shop)
+		cards.goods.sub.Text = string.format("%d IND / %d COM jobs", d.slots.factory, d.slots.shop)
 	end
 	return obj
 end
@@ -105,14 +105,14 @@ function Overlays.eventsColumn(gui)
 	C.list(Enum.FillDirection.Vertical, 8).Parent = guide
 	local head = C.new("Frame", { Name = "Head", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 0, Parent = guide })
 	Icons.badge("map", { Size = 30, IconSize = 16, Color = Colors.accent, Soft = Colors.accentSoft, Square = true, Position = UDim2.new(0, 0, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5), Parent = head })
-	C.label({ Text = "Cách chơi", Font = Theme.FontDisplay, TextSize = 16, Size = UDim2.new(1, -100, 1, 0), Position = UDim2.fromOffset(40, 0), Parent = head })
+	C.label({ Text = "How to play", Font = Theme.FontDisplay, TextSize = 16, Size = UDim2.new(1, -100, 1, 0), Position = UDim2.fromOffset(40, 0), Parent = head })
 	local progress = C.pill({ Name = "Progress", Text = "0 / 5", TextSize = 11, Color = Colors.accentSoft, TextColor = Colors.accent, Height = 22, Position = UDim2.new(1, 0, 0.5, 0), AnchorPoint = Vector2.new(1, 0.5), Parent = head })
 	local STEPS = {
-		"Kéo đường từ CỔNG vào lưới",
-		"Xây nhà sát đường",
-		"Xây chỗ làm: văn phòng, hoặc shop + nhà máy",
-		"Thêm công viên, trường hoặc bệnh viện",
-		"Bấm BẮT ĐẦU",
+		"Drag a road from the GATE into the grid",
+		"Build homes next to the road",
+		"Add jobs: an office, or a shop + factory",
+		"Add a park, school or hospital",
+		"Press START",
 	}
 	local steps = {}
 	for i, text in ipairs(STEPS) do
@@ -127,7 +127,7 @@ function Overlays.eventsColumn(gui)
 		local label = C.label({ Text = text, Font = Theme.FontMedium, TextSize = 13, Wrapped = true, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, -30, 0, 0), Position = UDim2.fromOffset(30, 1), Parent = row })
 		steps[i] = { box = box, stroke = boxStroke, label = label, number = number, check = check }
 	end
-	C.label({ Text = "Lô gạch chéo có dấu ! là chưa nối đường về CỔNG: chưa có dân, chưa có doanh thu, vẫn tốn bảo trì.", TextSize = 12, Color = Colors.textMuted, Wrapped = true, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 10, Parent = guide })
+	C.label({ Text = "Striped lots with a ! aren't connected to the GATE: no residents, no revenue, but they still pay upkeep.", TextSize = 12, Color = Colors.textMuted, Wrapped = true, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 10, Parent = guide })
 
 	local slips = C.new("Frame", { Name = "Slips", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = 1, Parent = column })
 	C.list(Enum.FillDirection.Vertical, 8).Parent = slips
@@ -194,7 +194,7 @@ function Overlays.eventsColumn(gui)
 			slip(i, Colors.bad, title or text, sub)
 		end
 		for i, sc in ipairs(s.scenarios or {}) do
-			slip(10 + i, Colors.warn, string.format("Sự kiện: %s (còn %d tháng)", sc.name or sc.id, sc.monthsLeft or 0), sc.description)
+			slip(10 + i, Colors.warn, string.format("Event: %s (months left: %d)", sc.name or sc.id, sc.monthsLeft or 0), sc.description)
 		end
 	end
 	return obj
@@ -375,7 +375,7 @@ function Overlays.detailPanel(gui, ctx)
 	end
 
 	local function sizeText(def)
-		return def.size > 1 and string.format("%dx%d = %d ô", def.size, def.size, def.size * def.size) or "1 ô"
+		return def.size > 1 and string.format("%dx%d = %d tiles", def.size, def.size, def.size * def.size) or "1 tile"
 	end
 
 	local function renderVariant(s, id)
@@ -385,27 +385,27 @@ function Overlays.detailPanel(gui, ctx)
 		showPreview(id)
 		local price = s and CityEngine.priceOf(s, id) or def.price
 		local short = s ~= nil and s.budget < price
-		addRow(1, "Loại đất", string.format("%s (%s)", def.zone, def.code))
-		addRow(2, "Giá xây", short and string.format("%s, thiếu %s", Util.formatMoneyFull(price), Util.formatMoneyFull(price - s.budget)) or Util.formatMoneyFull(price), short and Colors.bad or nil)
-		addRow(3, "Diện tích", sizeText(def))
+		addRow(1, "Zone", string.format("%s (%s)", def.zone, def.code))
+		addRow(2, "Price", short and string.format("%s, short %s", Util.formatMoneyFull(price), Util.formatMoneyFull(price - s.budget)) or Util.formatMoneyFull(price), short and Colors.bad or nil)
+		addRow(3, "Size", sizeText(def))
 		if def.cap then
-			addRow(4, "Chỗ ở", string.format("%d người", def.cap))
+			addRow(4, "Housing", string.format("%d residents", def.cap))
 		end
 		if def.jobs then
-			addRow(5, "Chỗ làm", string.format("%d người", def.jobs))
+			addRow(5, "Jobs", string.format("%d workers", def.jobs))
 		end
 		if def.rev then
-			addRow(6, "Doanh thu", Util.formatMoneyFull(def.rev) .. " / người / tháng")
+			addRow(6, "Revenue", Util.formatMoneyFull(def.rev) .. " / worker / month")
 		end
 		if def.pts then
-			addRow(7, "Dịch vụ", string.format("+%d điểm, đủ cho %d dân", def.pts, def.pts * Config.FORMULA.residentsPerPoint))
+			addRow(7, "Services", string.format("+%d points, enough for %d residents", def.pts, def.pts * Config.FORMULA.residentsPerPoint))
 		end
-		addRow(8, "Bảo trì", Util.formatMoneyFull(def.maint) .. " / tháng")
-		addRow(9, "Phá dỡ hoàn", Util.formatMoneyFull(math.floor(def.price * Config.DEMOLISH_REFUND)))
+		addRow(8, "Upkeep", Util.formatMoneyFull(def.maint) .. " / month")
+		addRow(9, "Demolish refund", Util.formatMoneyFull(math.floor(def.price * Config.DEMOLISH_REFUND)))
 		addLine(10, Config.BUILDING_NOTES[id] or "", Colors.textDim)
 		local finished = s ~= nil and (s.status == "ENDED" or s.status == "FAILED")
 		action.Visible = true
-		action.Text = "CHỌN ĐỂ XÂY"
+		action.Text = "SELECT TO BUILD"
 		C.setButtonColor(action, Colors.accent)
 		action.TextColor3 = Colors.onAccent
 		C.setEnabled(action, not finished)
@@ -422,35 +422,35 @@ function Overlays.detailPanel(gui, ctx)
 			local col, row = CityLayout.cellXY(i)
 			swatch.BackgroundColor3 = Colors.panelAlt
 			swatchCode.Text = ""
-			title.Text = string.format("Ô trống (cột %d, hàng %d)", col, row)
-			addLine(1, "Chọn một loại đất ở bảng Xây dựng rồi bấm vào ô này để xây.", Colors.textDim)
+			title.Text = string.format("Empty tile (column %d, row %d)", col, row)
+			addLine(1, "Pick a zone in the Build panel, then click this tile to build.", Colors.textDim)
 			return
 		end
-		setHeader(kind, i == Config.GATE_INDEX and "Cổng thành phố" or (def.size > 1 and string.format("%s %dx%d", def.label, def.size, def.size) or def.label))
+		setHeader(kind, i == Config.GATE_INDEX and "City gate" or (def.size > 1 and string.format("%s %dx%d", def.label, def.size, def.size) or def.label))
 		local d = CityEngine.compute(s, s.population)
 		if d.conn[i] then
-			addStatus(1, kind == "road" and "Đã nối về CỔNG" or "Đang hoạt động (đã nối đường)", Colors.good)
+			addStatus(1, kind == "road" and "Connected to the GATE" or "Working (connected by road)", Colors.good)
 		else
-			addStatus(1, kind == "road" and "Chưa nối về CỔNG" or "Chưa nối đường về CỔNG", Colors.bad)
+			addStatus(1, kind == "road" and "Not connected to the GATE" or "No road to the GATE", Colors.bad)
 			if kind ~= "road" then
-				addLine(2, "Chưa có dân, chưa có doanh thu, vẫn tốn bảo trì.", Colors.bad)
+				addLine(2, "No residents, no revenue, still pays upkeep.", Colors.bad)
 			end
 		end
 		addLine(3, Config.BUILDING_NOTES[kind] or "", Colors.textDim)
 		if def.cap then
-			addRow(4, "Chỗ ở", string.format("%d người", def.cap))
+			addRow(4, "Housing", string.format("%d residents", def.cap))
 		elseif def.jobs and d.conn[i] then
 			local workers = Util.round(def.jobs * d.f)
 			local perMonth = (def.rev or 0) * def.jobs * d.f * (def.kind == "shop" and d.G or 1)
-			addRow(4, "Người làm", string.format("%d/%d", workers, def.jobs))
-			addRow(5, "Doanh thu", Util.formatMoneyFull(perMonth) .. "/tháng")
+			addRow(4, "Workers", string.format("%d/%d", workers, def.jobs))
+			addRow(5, "Revenue", Util.formatMoneyFull(perMonth) .. "/month")
 		end
-		addRow(6, "Bảo trì", Util.formatMoneyFull(def.maint) .. "/tháng", Colors.textDim)
+		addRow(6, "Upkeep", Util.formatMoneyFull(def.maint) .. "/month", Colors.textDim)
 		local finished = s.status == "ENDED" or s.status == "FAILED"
 		if i ~= Config.GATE_INDEX and not finished then
 			local refund = Util.formatMoneyFull(math.floor(def.price * Config.DEMOLISH_REFUND))
 			action.Visible = true
-			action.Text = armed and ("BẤM LẦN NỮA ĐỂ PHÁ (HOÀN " .. refund .. ")") or ("Phá dỡ, hoàn " .. refund)
+			action.Text = armed and ("PRESS AGAIN TO DEMOLISH (REFUND " .. refund .. ")") or ("Demolish, refund " .. refund)
 			C.setButtonColor(action, armed and Colors.danger or Colors.panelAlt)
 			action.TextColor3 = armed and Colors.onAccent or Colors.bad
 			C.setEnabled(action, true)
@@ -641,7 +641,7 @@ function Overlays.endScreen(gui, ctx)
 
 	local title = C.label({ Text = "", Font = Theme.FontDisplay, TextSize = 28, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(1, 0, 0, 34), LayoutOrder = 2, ZIndex = 46, Parent = card })
 	local reasonLabel = C.label({ Text = "", Font = Theme.FontMedium, TextSize = 13, Color = Colors.bad, XAlign = Enum.TextXAlignment.Center, Wrapped = true, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 3, ZIndex = 46, Parent = card })
-	local recordPill = C.pill({ Name = "Record", Text = "Kỷ lục mới!", TextSize = 12, Color = Colors.goldSoft, TextColor = Colors.warn, Height = 26, LayoutOrder = 4, ZIndex = 46, Parent = card })
+	local recordPill = C.pill({ Name = "Record", Text = "New record!", TextSize = 12, Color = Colors.goldSoft, TextColor = Colors.warn, Height = 26, LayoutOrder = 4, ZIndex = 46, Parent = card })
 
 	-- lưới số liệu 3x2
 	local grid = C.new("Frame", { Name = "Table", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 132), LayoutOrder = 5, ZIndex = 46, Parent = card })
@@ -651,7 +651,7 @@ function Overlays.endScreen(gui, ctx)
 	gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	gridLayout.Parent = grid
 	local cellValues = {}
-	local LABELS = { { "THÁNG", "Tháng" }, { "ĐIỂM", "Điểm" }, { "KỶ LỤC", "Kỷ lục" }, { "DÂN SỐ", "Dân số" }, { "HẠNH PHÚC", "Hạnh phúc" }, { "NGÂN SÁCH", "Ngân sách" } }
+	local LABELS = { { "MONTHS", "Month" }, { "SCORE", "Score" }, { "RECORD", "Record" }, { "POPULATION", "Population" }, { "HAPPINESS", "Happiness" }, { "BUDGET", "Budget" } }
 	for k, l in ipairs(LABELS) do
 		local cell = C.well({ Name = "Cell_" .. l[1], Size = UDim2.fromOffset(100, 62), LayoutOrder = k, ZIndex = 46, Parent = grid })
 		C.label({ Text = l[2], Font = Theme.FontBold, TextSize = 11, Color = Colors.textDim, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(1, -12, 0, 14), Position = UDim2.fromOffset(6, 10), ZIndex = 47, Parent = cell })
@@ -660,13 +660,13 @@ function Overlays.endScreen(gui, ctx)
 
 	local buttons = C.new("Frame", { Name = "Buttons", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 6, ZIndex = 46, Parent = card })
 	C.list(Enum.FillDirection.Horizontal, 8, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center).Parent = buttons
-	C.button({ Text = "CHƠI VÁN MỚI", Variant = "success", Font = Theme.FontDisplay, TextSize = 14, Size = UDim2.fromOffset(150, 44), LayoutOrder = 1, ZIndex = 46, Parent = buttons }, function()
+	C.button({ Text = "PLAY AGAIN", Variant = "success", Font = Theme.FontDisplay, TextSize = 14, Size = UDim2.fromOffset(150, 44), LayoutOrder = 1, ZIndex = 46, Parent = buttons }, function()
 		ctx.onNewGame()
 	end)
-	C.button({ Text = "Xem lịch sử", Variant = "secondary", Size = UDim2.fromOffset(130, 44), LayoutOrder = 2, ZIndex = 46, Parent = buttons }, function()
+	C.button({ Text = "View history", Variant = "secondary", Size = UDim2.fromOffset(130, 44), LayoutOrder = 2, ZIndex = 46, Parent = buttons }, function()
 		ctx.onHistory()
 	end)
-	C.button({ Text = "Ngắm thành phố", Variant = "white", Size = UDim2.fromOffset(140, 44), LayoutOrder = 3, ZIndex = 46, Parent = buttons }, function()
+	C.button({ Text = "View city", Variant = "white", Size = UDim2.fromOffset(140, 44), LayoutOrder = 3, ZIndex = 46, Parent = buttons }, function()
 		card.Visible = false
 	end)
 
@@ -690,20 +690,20 @@ function Overlays.endScreen(gui, ctx)
 		end
 		if (failed or ended) and shownFor ~= s.id then
 			shownFor = s.id
-			title.Text = ended and "Hoàn thành nhiệm kỳ!" or "Thành phố phá sản"
+			title.Text = ended and "Term complete!" or "City went bankrupt"
 			title.TextColor3 = ended and Colors.text or Colors.bad
-			reasonLabel.Text = failed and string.format("Ngân sách thâm hụt quá %s.", Util.formatMoneyFull(-Config.FAIL_BUDGET)) or ""
+			reasonLabel.Text = failed and string.format("The deficit went over %s.", Util.formatMoneyFull(-Config.FAIL_BUDGET)) or ""
 			reasonLabel.Visible = failed
 			local score = s.prosperityScore or 0
 			local best = (snap.profile and snap.profile.bestScore) or 0
-			cellValues["THÁNG"].Text = string.format("%d / %d", s.month, s.maxMonths)
-			cellValues["ĐIỂM"].Text = Util.formatInt(score)
-			cellValues["DÂN SỐ"].Text = Util.formatInt(s.population or 0)
-			cellValues["HẠNH PHÚC"].Text = tostring(Util.round(s.happiness))
-			cellValues["HẠNH PHÚC"].TextColor3 = Theme.happinessColor(s.happiness)
-			cellValues["NGÂN SÁCH"].Text = Util.formatMoneyFull(s.budget)
-			cellValues["NGÂN SÁCH"].TextColor3 = s.budget < 0 and Colors.bad or Colors.text
-			cellValues["KỶ LỤC"].Text = Util.formatInt(best)
+			cellValues["MONTHS"].Text = string.format("%d / %d", s.month, s.maxMonths)
+			cellValues["SCORE"].Text = Util.formatInt(score)
+			cellValues["POPULATION"].Text = Util.formatInt(s.population or 0)
+			cellValues["HAPPINESS"].Text = tostring(Util.round(s.happiness))
+			cellValues["HAPPINESS"].TextColor3 = Theme.happinessColor(s.happiness)
+			cellValues["BUDGET"].Text = Util.formatMoneyFull(s.budget)
+			cellValues["BUDGET"].TextColor3 = s.budget < 0 and Colors.bad or Colors.text
+			cellValues["RECORD"].Text = Util.formatInt(best)
 			-- kỷ lục mới khi điểm ván này chính là điểm cao nhất
 			recordPill.Visible = ended and score > 0 and score >= best
 			medalGradient.Color = ColorSequence.new({
@@ -711,7 +711,7 @@ function Overlays.endScreen(gui, ctx)
 				ColorSequenceKeypoint.new(1, ended and Colors.amber or Colors.dangerDark),
 			})
 			medalNumber.Text = tostring(s.month)
-			medalSub.Text = ended and "THÁNG" or "PHÁ SẢN"
+			medalSub.Text = ended and "MONTHS" or "BANKRUPT"
 			card.Visible = true
 			C.popIn(card, 0.85, 0.35)
 			if ended then

@@ -34,46 +34,46 @@ Config.MAX_ROAD_PATH = 24 -- số ô tối đa mỗi lần kéo đường
 Config.CATEGORY_ORDER = { "house", "shop", "factory", "office", "hospital", "school", "park", "road" }
 Config.BUILDING_ORDER = Config.CATEGORY_ORDER -- tên cũ
 Config.CATEGORIES = {
-	house = { code = "Ở", zone = "Đất ở", color = { 242, 194, 48 } },
-	shop = { code = "TM", zone = "Thương mại", color = { 208, 52, 52 }, inkLight = true },
-	factory = { code = "CN", zone = "Công nghiệp", color = { 126, 79, 181 }, inkLight = true },
-	office = { code = "VP", zone = "Văn phòng", color = { 47, 111, 208 }, inkLight = true },
-	hospital = { code = "YT", zone = "Y tế", color = { 192, 58, 124 }, inkLight = true },
-	school = { code = "GD", zone = "Giáo dục", color = { 240, 138, 36 } },
-	park = { code = "CX", zone = "Cây xanh", color = { 60, 157, 74 } },
-	road = { code = "GT", zone = "Giao thông", color = { 107, 112, 120 }, inkLight = true },
+	house = { code = "RES", zone = "Residential", color = { 242, 194, 48 } },
+	shop = { code = "COM", zone = "Commercial", color = { 208, 52, 52 }, inkLight = true },
+	factory = { code = "IND", zone = "Industrial", color = { 126, 79, 181 }, inkLight = true },
+	office = { code = "OFC", zone = "Office", color = { 47, 111, 208 }, inkLight = true },
+	hospital = { code = "MED", zone = "Health", color = { 192, 58, 124 }, inkLight = true },
+	school = { code = "EDU", zone = "Education", color = { 240, 138, 36 } },
+	park = { code = "PRK", zone = "Parks", color = { 60, 157, 74 } },
+	road = { code = "RD", zone = "Roads", color = { 107, 112, 120 }, inkLight = true },
 }
 
 -- mẫu chuẩn: id trùng tên loại, số đã cân bằng (bot, balance_sim và bản JS dùng mẫu này).
 -- mẫu nhỏ 1x1 rẻ, lãi/ô thấp hơn. mẫu lớn 2x2 đắt, lãi/ô cao hơn ~15-25%, đáng xây khi lưới đã chật.
 -- size = cạnh (ô), công trình 2x2 lấy ô bấm làm góc trên-trái
 Config.BUILDINGS = {
-	house = { kind = "house", label = "Nhà", price = 600, maint = 10, cap = 40 },
-	house_small = { kind = "house", label = "Nhà nhỏ", price = 350, maint = 6, cap = 20 },
-	apartment = { kind = "house", label = "Chung cư", size = 2, price = 3000, maint = 60, cap = 200 },
+	house = { kind = "house", label = "House", price = 600, maint = 10, cap = 40 },
+	house_small = { kind = "house", label = "Small house", price = 350, maint = 6, cap = 20 },
+	apartment = { kind = "house", label = "Apartments", size = 2, price = 3000, maint = 60, cap = 200 },
 
 	shop = { kind = "shop", label = "Shop", price = 1600, maint = 60, jobs = 20, rev = 105 },
-	cafe = { kind = "shop", label = "Quán cà phê", price = 900, maint = 35, jobs = 10, rev = 100 },
-	supermarket = { kind = "shop", label = "Siêu thị", size = 2, price = 7000, maint = 260, jobs = 90, rev = 110 },
+	cafe = { kind = "shop", label = "Cafe", price = 900, maint = 35, jobs = 10, rev = 100 },
+	supermarket = { kind = "shop", label = "Supermarket", size = 2, price = 7000, maint = 260, jobs = 90, rev = 110 },
 
-	factory = { kind = "factory", label = "Nhà máy", price = 1200, maint = 80, jobs = 30, rev = 55 },
-	workshop = { kind = "factory", label = "Xưởng nhỏ", price = 700, maint = 45, jobs = 15, rev = 55 },
-	plant = { kind = "factory", label = "Nhà máy lớn", size = 2, price = 5000, maint = 320, jobs = 130, rev = 58 },
+	factory = { kind = "factory", label = "Factory", price = 1200, maint = 80, jobs = 30, rev = 55 },
+	workshop = { kind = "factory", label = "Workshop", price = 700, maint = 45, jobs = 15, rev = 55 },
+	plant = { kind = "factory", label = "Large factory", size = 2, price = 5000, maint = 320, jobs = 130, rev = 58 },
 
-	office = { kind = "office", label = "Văn phòng", price = 3000, maint = 100, jobs = 20, rev = 160 },
-	office_small = { kind = "office", label = "Văn phòng nhỏ", price = 1500, maint = 55, jobs = 10, rev = 155 },
-	tower = { kind = "office", label = "Tháp văn phòng", size = 2, price = 14000, maint = 420, jobs = 90, rev = 170 },
+	office = { kind = "office", label = "Office", price = 3000, maint = 100, jobs = 20, rev = 160 },
+	office_small = { kind = "office", label = "Small office", price = 1500, maint = 55, jobs = 10, rev = 155 },
+	tower = { kind = "office", label = "Office tower", size = 2, price = 14000, maint = 420, jobs = 90, rev = 170 },
 
-	hospital = { kind = "hospital", label = "Bệnh viện", price = 2400, maint = 120, jobs = 20, pts = 10 },
-	clinic = { kind = "hospital", label = "Trạm y tế", price = 1200, maint = 60, jobs = 8, pts = 5 },
+	hospital = { kind = "hospital", label = "Hospital", price = 2400, maint = 120, jobs = 20, pts = 10 },
+	clinic = { kind = "hospital", label = "Clinic", price = 1200, maint = 60, jobs = 8, pts = 5 },
 
-	school = { kind = "school", label = "Trường học", price = 2000, maint = 100, jobs = 20, pts = 10 },
-	school_big = { kind = "school", label = "Trường lớn", size = 2, price = 7000, maint = 350, jobs = 80, pts = 40 },
+	school = { kind = "school", label = "School", price = 2000, maint = 100, jobs = 20, pts = 10 },
+	school_big = { kind = "school", label = "Large school", size = 2, price = 7000, maint = 350, jobs = 80, pts = 40 },
 
-	park = { kind = "park", label = "Công viên", price = 1800, maint = 100, pts = 5 },
-	park_big = { kind = "park", label = "Công viên lớn", size = 2, price = 6000, maint = 360, pts = 22 },
+	park = { kind = "park", label = "Park", price = 1800, maint = 100, pts = 5 },
+	park_big = { kind = "park", label = "Large park", size = 2, price = 6000, maint = 360, pts = 22 },
 
-	road = { kind = "road", label = "Đường", price = 50, maint = 0 },
+	road = { kind = "road", label = "Road", price = 50, maint = 0 },
 }
 -- thứ tự hiện trên Chú giải, mẫu chuẩn đứng đầu
 Config.VARIANTS = {
@@ -96,25 +96,25 @@ end
 
 -- 1 dòng ghi chú trên thẻ thông tin
 Config.BUILDING_NOTES = {
-	house = "Dân chỉ đến khi có việc làm.",
-	house_small = "Rẻ nhất để có dân, nhưng ít chỗ ở trên mỗi ô.",
-	apartment = "Nhiều chỗ ở nhất trên mỗi ô, khi lưới đã chật.",
-	shop = "Cần hàng từ nhà máy.",
-	cafe = "Rẻ, ít người làm. Vẫn cần hàng từ nhà máy.",
-	supermarket = "Lãi mỗi ô cao nhất trong thương mại. Cần nhiều hàng.",
-	factory = "Cấp hàng cho shop: 1 công nhân đủ hàng cho 1 nhân viên shop.",
-	workshop = "Rẻ, ít người làm. Cấp hàng cho shop.",
-	plant = "Nhiều chỗ làm, cấp nhiều hàng cho shop.",
-	office = "Lương cao, không cần hàng.",
-	office_small = "Rẻ hơn, ít chỗ làm. Không cần hàng.",
-	tower = "Lãi mỗi ô cao nhất, rất đắt.",
-	hospital = "Dân vui hơn.",
-	clinic = "Rẻ, phục vụ ít dân hơn.",
-	school = "Dân vui hơn.",
-	school_big = "Phục vụ nhiều dân, rẻ hơn 4 trường nhỏ.",
-	park = "Không cần người làm.",
-	park_big = "Phục vụ nhiều dân hơn 4 công viên nhỏ.",
-	road = "Mọi công trình phải nối đường về CỔNG.",
+	house = "People only move in when there are jobs.",
+	house_small = "Cheapest way to house people, but few homes per tile.",
+	apartment = "Most homes per tile, for when the grid gets full.",
+	shop = "Needs goods from factories.",
+	cafe = "Cheap, few workers. Still needs goods from factories.",
+	supermarket = "Best profit per tile in commercial. Needs lots of goods.",
+	factory = "Supplies shops: 1 factory worker makes goods for 1 shop worker.",
+	workshop = "Cheap, few workers. Supplies shops.",
+	plant = "Lots of jobs, supplies lots of goods to shops.",
+	office = "High pay, no goods needed.",
+	office_small = "Cheaper, fewer jobs. No goods needed.",
+	tower = "Best profit per tile, very expensive.",
+	hospital = "Makes residents happier.",
+	clinic = "Cheap, serves fewer residents.",
+	school = "Makes residents happier.",
+	school_big = "Serves many residents, cheaper than 4 schools.",
+	park = "Needs no workers.",
+	park_big = "Serves more residents than 4 parks.",
+	road = "Every building needs a road to the GATE.",
 }
 
 -- Công thức (mục 4)
@@ -141,10 +141,10 @@ Config.CRISIS = {
 
 -- dạng "tiêu đề: giải thích". UI in đậm phần trước dấu hai chấm, phần sau thành dòng phụ
 Config.CRISIS_LABELS = {
-	BUDGET = "Ngân sách âm: đang lỗ, chưa xây được gì",
-	HAPPINESS = "Hạnh phúc dưới 50: không ai muốn chuyển đến",
-	UNEMPLOYMENT = "Việc làm dưới 80%: thiếu chỗ làm",
-	SHORTAGE = "Shop thiếu hàng: cần thêm nhà máy",
+	BUDGET = "Budget below zero: losing money, can't build",
+	HAPPINESS = "Happiness below 50: nobody wants to move in",
+	UNEMPLOYMENT = "Employment below 80%: not enough jobs",
+	SHORTAGE = "Shops lack goods: build more factories",
 }
 
 -- Lớp học, vai trò

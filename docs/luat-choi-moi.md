@@ -77,7 +77,7 @@ Cân bằng mẫu (kiểm bằng `tests/engine_spec.lua` và `tests/balance_sim.
 - **Mẫu lớn** đắt, lãi (hoặc sức chứa, điểm dịch vụ trên bảo trì) mỗi ô cao hơn mẫu chuẩn **10-30%**: phần thưởng khi lưới đã chật,
   không đủ lớn để chỉ xây mẫu lớn là thắng.
 - Bản thử JS (`prototypes/luat-moi/`) và bảng mục 10 chỉ dùng mẫu chuẩn; bản Luau vẫn khớp từng con số với bản JS ở các mẫu đó.
-- Bot của nút "Xây mẫu" chỉ xây mẫu lớn khi thành phố đã có dân và mua xong vẫn còn ít nhất bằng giá mẫu đó: đạt 2.235 điểm
+- Bot của nút "Demo build bot" chỉ xây mẫu lớn khi thành phố đã có dân và mua xong vẫn còn ít nhất bằng giá mẫu đó: đạt 2.235 điểm
   (mẫu chuẩn 2.155). Thử cho bot mua mẫu lớn ngay khi đủ tiền thì nó mua chung cư + công viên lớn từ tháng 0, không còn
   tiền xây chỗ làm và phá sản ở tháng 14; cho mua khi đã có lãi thì chỉ đạt 1.587 vì thừa chỗ ở, thừa dịch vụ. Bài học
   cho người chơi: mẫu lớn là món của giữa và cuối ván, khi đã dư tiền và lưới bắt đầu chật.
@@ -121,11 +121,11 @@ Mỗi tháng = 1 lượt, 20 giây (giữ `TICK_SECONDS` hiện tại). Các bư
 - **Xây**: chỉ trên ô trống (mẫu 2×2: cả 4 ô trống, nằm trọn trong lưới), khi ngân sách ≥ giá. Trừ tiền ngay, có tác dụng từ lượt tính kế tiếp. Xây được cả khi đang chạy lẫn tạm dừng, không xây được khi ván đã kết thúc.
 - **Kéo đường**: một lần kéo gửi một yêu cầu, tối đa 24 ô. Bỏ qua ô đã là đường. Nếu gặp ô có công trình hoặc không đủ tiền cho cả đoạn thì **từ chối cả đoạn**. Lý do: giới hạn tần suất hiện tại chỉ cho dồn 8 yêu cầu.
 - **Phá dỡ**: mọi thứ trừ ô cổng, hoàn **50% giá xây**. Bấm vào ô nào của công trình 2×2 cũng phá cả công trình.
-  Phá đường có thể làm công trình khác mất nối. Có hai cách: công cụ Phá dỡ (PD), hoặc nút PHÁ DỠ trong thẻ thông tin của
+  Phá đường có thể làm công trình khác mất nối. Có hai cách: công cụ Phá dỡ (DEL), hoặc nút Demolish trong thẻ thông tin của
   công trình (bấm hai lần mới phá).
 - **Thẻ thông tin**: nút "i" cạnh mỗi mẫu ở bảng Xây dựng mở thẻ có hình 3D, giá, diện tích, chỗ ở/chỗ làm, doanh thu mỗi người,
-  điểm dịch vụ, bảo trì và nút CHỌN ĐỂ XÂY. Bấm vào công trình đã xây (khi không chọn công cụ) mở thẻ tình trạng của nó.
-- **Đi dạo**: vẫn xây được khi đi trong thành phố. Trên màn hình cảm ứng, vuốt là xoay camera nên chỉ chạm nhẹ mới xây.
+  điểm dịch vụ, bảo trì và nút SELECT TO BUILD. Bấm vào công trình đã xây (khi không chọn công cụ) mở thẻ tình trạng của nó.
+- **Đi dạo (Walk)**: vẫn xây được khi đi trong thành phố. Trên màn hình cảm ứng, vuốt là xoay camera nên chỉ chạm nhẹ mới xây.
 - **Thuế**: 0-50%, bước 1%. Đổi lúc nào cũng được, áp dụng từ lượt tính kế tiếp.
 - Server kiểm tra lại mọi thứ: loại công trình hợp lệ, toạ độ là số nguyên trong lưới, ô trống, đủ tiền, ván chưa kết thúc.
 

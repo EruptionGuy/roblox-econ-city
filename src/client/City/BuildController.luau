@@ -111,7 +111,7 @@ local function send(self, action, payload, okText)
 	task.spawn(function()
 		local response = self.deps.request(action, payload)
 		if not response.ok then
-			self.deps.toast(response.error or "Không thực hiện được", "error")
+			self.deps.toast(response.error or "Couldn't do that", "error")
 		elseif okText then
 			self.deps.toast(okText(response.data or {}))
 		end
@@ -124,14 +124,14 @@ function BuildController:apply(index)
 		self.deps.inspect(index)
 	elseif tool == "demolish" then
 		send(self, "demolish", { index = index }, function(data)
-			return "Đã phá dỡ, hoàn " .. Util.formatMoneyFull(data.refund or 0)
+			return "Demolished, refunded " .. Util.formatMoneyFull(data.refund or 0)
 		end)
 	elseif tool == "road" then
 		send(self, "buildRoad", { path = { index } })
 	else
 		local unconnected = self:preview(index) == "warn"
 		send(self, "build", { kind = tool, index = index }, unconnected and function()
-			return "Chưa nối đường về CỔNG nên công trình này chưa hoạt động. Hãy kéo đường tới nó."
+			return "Not connected to the GATE, so this building isn't working yet. Drag a road to it."
 		end or nil)
 	end
 end

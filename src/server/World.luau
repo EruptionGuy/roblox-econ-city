@@ -524,7 +524,7 @@ function World.build()
 
 	local ok, err = pcall(cityscape, folder)
 	if not ok then
-		warn("[EconCity] Không dựng được khung cảnh đô thị: " .. tostring(err))
+		warn("[EconCity] Couldn't build the city backdrop: " .. tostring(err))
 		part({ Name = "Ground", Size = Vector3.new(1000, 2, 1000), Position = Vector3.new(0, -1, 0), Material = M.Asphalt, Color = ASPHALT, Parent = folder })
 	end
 

@@ -55,14 +55,14 @@ end
 -- customDef (tuỳ chọn, kịch bản giáo viên tự tạo): { name, description, severity, durationMonths, effects }
 function GameTick.addScenario(session, scenarioId, meta, customDef)
 	if not Scenarios.get(scenarioId) and type(customDef) ~= "table" then
-		return false, "Kịch bản không tồn tại"
+		return false, "Scenario doesn't exist"
 	end
 	if GameTick.isFinished(session) then
-		return false, "Ván đã kết thúc"
+		return false, "This game has ended"
 	end
 	for _, s in ipairs(session.scenarios) do
 		if s.id == scenarioId then
-			return false, "Kịch bản đang diễn ra"
+			return false, "That scenario is already running"
 		end
 	end
 	local entry = { id = scenarioId, monthsActive = 0 }

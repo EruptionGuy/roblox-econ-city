@@ -96,7 +96,7 @@ function LeaderboardService:_nameOf(userId)
 	if cached then
 		return cached
 	end
-	local fallback = "Người chơi " .. tostring(userId)
+	local fallback = "Player " .. tostring(userId)
 	local failedAt = self.nameFailedAt[userId]
 	if not self.resolveName or (failedAt and self.clock() - failedAt < NAME_RETRY_SECONDS) then
 		return fallback
@@ -131,18 +131,18 @@ function LeaderboardService:top(scope, code, viewerId)
 	local storeName
 	if scope == "class" then
 		if type(code) ~= "string" or code == "" then
-			return false, "Chưa chọn lớp"
+			return false, "No class selected"
 		end
 		if not self.getClass then
-			return false, "Chưa xem được bảng xếp hạng lớp"
+			return false, "Class leaderboard isn't available"
 		end
 		local record = self.getClass(code)
 		if not record then
-			return false, "Không tìm thấy lớp"
+			return false, "Class not found"
 		end
 		local isMember = record.teacherId == viewerId or (record.members or {})[tostring(viewerId)] ~= nil
 		if not isMember then
-			return false, "Bạn không thuộc lớp này"
+			return false, "You're not in this class"
 		end
 		storeName = classStore(record.code)
 		code = record.code
@@ -153,7 +153,7 @@ function LeaderboardService:top(scope, code, viewerId)
 	end
 	local ok, entries = self:_entries(storeName)
 	if not ok then
-		return false, "Không tải được bảng xếp hạng"
+		return false, "Couldn't load the leaderboard"
 	end
 	if self.resolveNames then
 		local missing = {}

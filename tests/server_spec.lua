@@ -217,7 +217,7 @@ H.test("Snapshot gửi client có tên kịch bản và số tháng còn lại",
 	join(s, 1, "A")
 	s:addScenario(1, "pandemic")
 	local snap = s:snapshot(1, { isTeacher = false })
-	H.eq(snap.session.scenarios[1].name, "Đại dịch")
+	H.eq(snap.session.scenarios[1].name, "Pandemic")
 	H.eq(snap.session.scenarios[1].monthsLeft, 6)
 	H.eq(snap.persistence, "memory")
 	H.eq(snap.isTeacher, false)
@@ -305,7 +305,7 @@ H.test("Tham gia lớp: không phân biệt hoa thường, không trùng, mã sa
 	local _, cls2 = c:createClass(99, "T", "10A2")
 	local okLimit, errLimit = c:joinClass(1, "Alice", cls2.code)
 	H.eq(okLimit, false)
-	H.truthy(errLimit:find("tối đa"))
+	H.truthy(errLimit:find("maximum"))
 end)
 
 H.test("Gán kịch bản: đếm đúng số học sinh nhận được, chỉ chủ lớp được gán", function()
@@ -520,7 +520,7 @@ H.test("Bảng xếp hạng: tra tên lỗi không gọi lại liên tục", fun
 	lb:submit(7, nil, 50, {})
 	lb.names = {}
 	local _, d1 = lb:top("global", nil, 1)
-	H.eq(d1.rows[1].name, "Người chơi 7")
+	H.eq(d1.rows[1].name, "Player 7")
 	clock = clock + Config.LEADERBOARD_CACHE_SECONDS + 1
 	lb:top("global", nil, 1)
 	H.eq(calls, 1)
@@ -566,7 +566,7 @@ H.test("Tên lớp tiếng Việt dài được cắt theo ký tự và qua bộ
 	c.filterText = function() error("filter down") end
 	local ok2, cls2 = c:createClass(99, "T", "Lop B")
 	H.truthy(ok2)
-	H.eq(cls2.name, "Lớp " .. cls2.code, "lọc lỗi => dùng tên mặc định")
+	H.eq(cls2.name, "Class " .. cls2.code, "lọc lỗi => dùng tên mặc định")
 	H.eq(cls2.renamed, true)
 end)
 

@@ -39,7 +39,7 @@ function State.set(snapshot)
 	for _, fn in ipairs(listeners) do
 		local ok, err = pcall(fn, snapshot, State.previous)
 		if not ok then
-			warn("[EconCity] Lỗi cập nhật giao diện: " .. tostring(err))
+			warn("[EconCity] UI update error: " .. tostring(err))
 		end
 	end
 end
@@ -62,9 +62,9 @@ function State.request(action, payload, timeout)
 			return requestFunction:InvokeServer(action, payload)
 		end)
 		if not ok then
-			result = { ok = false, error = "Mất kết nối tới máy chủ" }
+			result = { ok = false, error = "Lost connection to the server" }
 		elseif type(response) ~= "table" then
-			result = { ok = false, error = "Máy chủ không phản hồi" }
+			result = { ok = false, error = "The server isn't responding" }
 		else
 			result = response
 		end
@@ -76,7 +76,7 @@ function State.request(action, payload, timeout)
 		waited = waited + 0.1
 	end
 	if not done then
-		return { ok = false, error = "Máy chủ phản hồi quá lâu, hãy thử lại" }
+		return { ok = false, error = "The server took too long, please try again" }
 	end
 	return result
 end

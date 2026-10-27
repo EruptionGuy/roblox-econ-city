@@ -245,7 +245,7 @@ end
 local function finished(session)
 	return session.status == "ENDED" or session.status == "FAILED"
 end
-local FINISHED_TEXT = "Ván đã kết thúc, hãy bắt đầu ván mới"
+local FINISHED_TEXT = "This game has ended, start a new one"
 
 function CityEngine.priceOf(session, kind)
 	return Util.round(B[kind].price * Scenarios.aggregate(session.scenarios).priceMultiplier)
@@ -256,24 +256,24 @@ function CityEngine.build(session, kind, index)
 		return false, FINISHED_TEXT
 	end
 	if type(kind) ~= "string" or not B[kind] then
-		return false, "Loại công trình không hợp lệ"
+		return false, "Invalid building type"
 	end
 	if not CityEngine.isValidIndex(index) then
-		return false, "Ô không hợp lệ"
+		return false, "Invalid tile"
 	end
 	local size = B[kind].size
 	local fp = CityEngine.footprint(index, size)
 	if not fp then
-		return false, string.format("%s cần %dx%d ô, tràn ra ngoài lưới", B[kind].label, size, size)
+		return false, string.format("%s: needs %dx%d tiles, goes off the grid", B[kind].label, size, size)
 	end
 	for _, c in ipairs(fp) do
 		if session.cells[c] ~= EMPTY then
-			return false, size > 1 and string.format("%s cần %dx%d ô trống", B[kind].label, size, size) or "Ô này đã có công trình"
+			return false, size > 1 and string.format("%s: needs %dx%d empty tiles", B[kind].label, size, size) or "This tile is already taken"
 		end
 	end
 	local cost = CityEngine.priceOf(session, kind)
 	if session.budget < cost then
-		return false, "Không đủ tiền: cần " .. Util.formatMoneyFull(cost)
+		return false, "Not enough money: need " .. Util.formatMoneyFull(cost)
 	end
 	session.budget = session.budget - cost
 	session.cells[index] = kind
@@ -289,21 +289,21 @@ function CityEngine.buildRoad(session, path)
 		return false, FINISHED_TEXT
 	end
 	if type(path) ~= "table" then
-		return false, "Đoạn đường không hợp lệ"
+		return false, "Invalid road path"
 	end
 	local n = #path
 	if n == 0 or n > Config.MAX_ROAD_PATH then
-		return false, string.format("Mỗi lần kéo tối đa %d ô", Config.MAX_ROAD_PATH)
+		return false, string.format("Max %d tiles per drag", Config.MAX_ROAD_PATH)
 	end
 	local todo, seen = {}, {}
 	for k = 1, n do
 		local i = path[k]
 		if not CityEngine.isValidIndex(i) then
-			return false, "Ô không hợp lệ"
+			return false, "Invalid tile"
 		end
 		if not seen[i] and session.cells[i] ~= "road" then
 			if session.cells[i] ~= EMPTY then
-				return false, "Đoạn đường đi qua ô đã có công trình"
+				return false, "The road crosses a tile with a building"
 			end
 			table.insert(todo, i)
 		end
@@ -311,7 +311,7 @@ function CityEngine.buildRoad(session, path)
 	end
 	local cost = #todo * CityEngine.priceOf(session, "road")
 	if session.budget < cost then
-		return false, string.format("Không đủ tiền: cần %s cho %d ô đường", Util.formatMoneyFull(cost), #todo)
+		return false, string.format("Not enough money: need %s (road tiles: %d)", Util.formatMoneyFull(cost), #todo)
 	end
 	session.budget = session.budget - cost
 	for _, i in ipairs(todo) do
@@ -325,16 +325,16 @@ function CityEngine.demolish(session, index)
 		return false, FINISHED_TEXT
 	end
 	if not CityEngine.isValidIndex(index) then
-		return false, "Ô trống"
+		return false, "Empty tile"
 	end
 	-- bấm ô nào của công trình nhiều ô cũng phá cả công trình
 	local anchor = CityEngine.anchorOf(session.cells, index)
 	local def = CityEngine.isValidIndex(anchor) and B[session.cells[anchor]]
 	if not def then
-		return false, "Ô trống"
+		return false, "Empty tile"
 	end
 	if anchor == Config.GATE_INDEX then
-		return false, "Không phá được ô cổng"
+		return false, "The gate can't be demolished"
 	end
 	local refund = math.floor(def.price * Config.DEMOLISH_REFUND)
 	session.budget = session.budget + refund
@@ -349,7 +349,7 @@ function CityEngine.setTax(session, tax)
 		return false, FINISHED_TEXT
 	end
 	if type(tax) ~= "number" or tax ~= math.floor(tax) or tax < 0 or tax > Config.TAX_MAX then
-		return false, string.format("Thuế từ 0 đến %d%%", Config.TAX_MAX)
+		return false, string.format("Tax must be 0 to %d%%", Config.TAX_MAX)
 	end
 	session.tax = tax
 	return true, { tax = tax }
@@ -428,46 +428,46 @@ Config.MAX_ROAD_PATH = 24 -- số ô tối đa mỗi lần kéo đường
 Config.CATEGORY_ORDER = { "house", "shop", "factory", "office", "hospital", "school", "park", "road" }
 Config.BUILDING_ORDER = Config.CATEGORY_ORDER -- tên cũ
 Config.CATEGORIES = {
-	house = { code = "Ở", zone = "Đất ở", color = { 242, 194, 48 } },
-	shop = { code = "TM", zone = "Thương mại", color = { 208, 52, 52 }, inkLight = true },
-	factory = { code = "CN", zone = "Công nghiệp", color = { 126, 79, 181 }, inkLight = true },
-	office = { code = "VP", zone = "Văn phòng", color = { 47, 111, 208 }, inkLight = true },
-	hospital = { code = "YT", zone = "Y tế", color = { 192, 58, 124 }, inkLight = true },
-	school = { code = "GD", zone = "Giáo dục", color = { 240, 138, 36 } },
-	park = { code = "CX", zone = "Cây xanh", color = { 60, 157, 74 } },
-	road = { code = "GT", zone = "Giao thông", color = { 107, 112, 120 }, inkLight = true },
+	house = { code = "RES", zone = "Residential", color = { 242, 194, 48 } },
+	shop = { code = "COM", zone = "Commercial", color = { 208, 52, 52 }, inkLight = true },
+	factory = { code = "IND", zone = "Industrial", color = { 126, 79, 181 }, inkLight = true },
+	office = { code = "OFC", zone = "Office", color = { 47, 111, 208 }, inkLight = true },
+	hospital = { code = "MED", zone = "Health", color = { 192, 58, 124 }, inkLight = true },
+	school = { code = "EDU", zone = "Education", color = { 240, 138, 36 } },
+	park = { code = "PRK", zone = "Parks", color = { 60, 157, 74 } },
+	road = { code = "RD", zone = "Roads", color = { 107, 112, 120 }, inkLight = true },
 }
 
 -- mẫu chuẩn: id trùng tên loại, số đã cân bằng (bot, balance_sim và bản JS dùng mẫu này).
 -- mẫu nhỏ 1x1 rẻ, lãi/ô thấp hơn. mẫu lớn 2x2 đắt, lãi/ô cao hơn ~15-25%, đáng xây khi lưới đã chật.
 -- size = cạnh (ô), công trình 2x2 lấy ô bấm làm góc trên-trái
 Config.BUILDINGS = {
-	house = { kind = "house", label = "Nhà", price = 600, maint = 10, cap = 40 },
-	house_small = { kind = "house", label = "Nhà nhỏ", price = 350, maint = 6, cap = 20 },
-	apartment = { kind = "house", label = "Chung cư", size = 2, price = 3000, maint = 60, cap = 200 },
+	house = { kind = "house", label = "House", price = 600, maint = 10, cap = 40 },
+	house_small = { kind = "house", label = "Small house", price = 350, maint = 6, cap = 20 },
+	apartment = { kind = "house", label = "Apartments", size = 2, price = 3000, maint = 60, cap = 200 },
 
 	shop = { kind = "shop", label = "Shop", price = 1600, maint = 60, jobs = 20, rev = 105 },
-	cafe = { kind = "shop", label = "Quán cà phê", price = 900, maint = 35, jobs = 10, rev = 100 },
-	supermarket = { kind = "shop", label = "Siêu thị", size = 2, price = 7000, maint = 260, jobs = 90, rev = 110 },
+	cafe = { kind = "shop", label = "Cafe", price = 900, maint = 35, jobs = 10, rev = 100 },
+	supermarket = { kind = "shop", label = "Supermarket", size = 2, price = 7000, maint = 260, jobs = 90, rev = 110 },
 
-	factory = { kind = "factory", label = "Nhà máy", price = 1200, maint = 80, jobs = 30, rev = 55 },
-	workshop = { kind = "factory", label = "Xưởng nhỏ", price = 700, maint = 45, jobs = 15, rev = 55 },
-	plant = { kind = "factory", label = "Nhà máy lớn", size = 2, price = 5000, maint = 320, jobs = 130, rev = 58 },
+	factory = { kind = "factory", label = "Factory", price = 1200, maint = 80, jobs = 30, rev = 55 },
+	workshop = { kind = "factory", label = "Workshop", price = 700, maint = 45, jobs = 15, rev = 55 },
+	plant = { kind = "factory", label = "Large factory", size = 2, price = 5000, maint = 320, jobs = 130, rev = 58 },
 
-	office = { kind = "office", label = "Văn phòng", price = 3000, maint = 100, jobs = 20, rev = 160 },
-	office_small = { kind = "office", label = "Văn phòng nhỏ", price = 1500, maint = 55, jobs = 10, rev = 155 },
-	tower = { kind = "office", label = "Tháp văn phòng", size = 2, price = 14000, maint = 420, jobs = 90, rev = 170 },
+	office = { kind = "office", label = "Office", price = 3000, maint = 100, jobs = 20, rev = 160 },
+	office_small = { kind = "office", label = "Small office", price = 1500, maint = 55, jobs = 10, rev = 155 },
+	tower = { kind = "office", label = "Office tower", size = 2, price = 14000, maint = 420, jobs = 90, rev = 170 },
 
-	hospital = { kind = "hospital", label = "Bệnh viện", price = 2400, maint = 120, jobs = 20, pts = 10 },
-	clinic = { kind = "hospital", label = "Trạm y tế", price = 1200, maint = 60, jobs = 8, pts = 5 },
+	hospital = { kind = "hospital", label = "Hospital", price = 2400, maint = 120, jobs = 20, pts = 10 },
+	clinic = { kind = "hospital", label = "Clinic", price = 1200, maint = 60, jobs = 8, pts = 5 },
 
-	school = { kind = "school", label = "Trường học", price = 2000, maint = 100, jobs = 20, pts = 10 },
-	school_big = { kind = "school", label = "Trường lớn", size = 2, price = 7000, maint = 350, jobs = 80, pts = 40 },
+	school = { kind = "school", label = "School", price = 2000, maint = 100, jobs = 20, pts = 10 },
+	school_big = { kind = "school", label = "Large school", size = 2, price = 7000, maint = 350, jobs = 80, pts = 40 },
 
-	park = { kind = "park", label = "Công viên", price = 1800, maint = 100, pts = 5 },
-	park_big = { kind = "park", label = "Công viên lớn", size = 2, price = 6000, maint = 360, pts = 22 },
+	park = { kind = "park", label = "Park", price = 1800, maint = 100, pts = 5 },
+	park_big = { kind = "park", label = "Large park", size = 2, price = 6000, maint = 360, pts = 22 },
 
-	road = { kind = "road", label = "Đường", price = 50, maint = 0 },
+	road = { kind = "road", label = "Road", price = 50, maint = 0 },
 }
 -- thứ tự hiện trên Chú giải, mẫu chuẩn đứng đầu
 Config.VARIANTS = {
@@ -490,25 +490,25 @@ end
 
 -- 1 dòng ghi chú trên thẻ thông tin
 Config.BUILDING_NOTES = {
-	house = "Dân chỉ đến khi có việc làm.",
-	house_small = "Rẻ nhất để có dân, nhưng ít chỗ ở trên mỗi ô.",
-	apartment = "Nhiều chỗ ở nhất trên mỗi ô, khi lưới đã chật.",
-	shop = "Cần hàng từ nhà máy.",
-	cafe = "Rẻ, ít người làm. Vẫn cần hàng từ nhà máy.",
-	supermarket = "Lãi mỗi ô cao nhất trong thương mại. Cần nhiều hàng.",
-	factory = "Cấp hàng cho shop: 1 công nhân đủ hàng cho 1 nhân viên shop.",
-	workshop = "Rẻ, ít người làm. Cấp hàng cho shop.",
-	plant = "Nhiều chỗ làm, cấp nhiều hàng cho shop.",
-	office = "Lương cao, không cần hàng.",
-	office_small = "Rẻ hơn, ít chỗ làm. Không cần hàng.",
-	tower = "Lãi mỗi ô cao nhất, rất đắt.",
-	hospital = "Dân vui hơn.",
-	clinic = "Rẻ, phục vụ ít dân hơn.",
-	school = "Dân vui hơn.",
-	school_big = "Phục vụ nhiều dân, rẻ hơn 4 trường nhỏ.",
-	park = "Không cần người làm.",
-	park_big = "Phục vụ nhiều dân hơn 4 công viên nhỏ.",
-	road = "Mọi công trình phải nối đường về CỔNG.",
+	house = "People only move in when there are jobs.",
+	house_small = "Cheapest way to house people, but few homes per tile.",
+	apartment = "Most homes per tile, for when the grid gets full.",
+	shop = "Needs goods from factories.",
+	cafe = "Cheap, few workers. Still needs goods from factories.",
+	supermarket = "Best profit per tile in commercial. Needs lots of goods.",
+	factory = "Supplies shops: 1 factory worker makes goods for 1 shop worker.",
+	workshop = "Cheap, few workers. Supplies shops.",
+	plant = "Lots of jobs, supplies lots of goods to shops.",
+	office = "High pay, no goods needed.",
+	office_small = "Cheaper, fewer jobs. No goods needed.",
+	tower = "Best profit per tile, very expensive.",
+	hospital = "Makes residents happier.",
+	clinic = "Cheap, serves fewer residents.",
+	school = "Makes residents happier.",
+	school_big = "Serves many residents, cheaper than 4 schools.",
+	park = "Needs no workers.",
+	park_big = "Serves more residents than 4 parks.",
+	road = "Every building needs a road to the GATE.",
 }
 
 -- Công thức (mục 4)
@@ -535,10 +535,10 @@ Config.CRISIS = {
 
 -- dạng "tiêu đề: giải thích". UI in đậm phần trước dấu hai chấm, phần sau thành dòng phụ
 Config.CRISIS_LABELS = {
-	BUDGET = "Ngân sách âm: đang lỗ, chưa xây được gì",
-	HAPPINESS = "Hạnh phúc dưới 50: không ai muốn chuyển đến",
-	UNEMPLOYMENT = "Việc làm dưới 80%: thiếu chỗ làm",
-	SHORTAGE = "Shop thiếu hàng: cần thêm nhà máy",
+	BUDGET = "Budget below zero: losing money, can't build",
+	HAPPINESS = "Happiness below 50: nobody wants to move in",
+	UNEMPLOYMENT = "Employment below 80%: not enough jobs",
+	SHORTAGE = "Shops lack goods: build more factories",
 }
 
 -- Lớp học, vai trò
@@ -907,14 +907,14 @@ end
 -- customDef (tuỳ chọn, kịch bản giáo viên tự tạo): { name, description, severity, durationMonths, effects }
 function GameTick.addScenario(session, scenarioId, meta, customDef)
 	if not Scenarios.get(scenarioId) and type(customDef) ~= "table" then
-		return false, "Kịch bản không tồn tại"
+		return false, "Scenario doesn't exist"
 	end
 	if GameTick.isFinished(session) then
-		return false, "Ván đã kết thúc"
+		return false, "This game has ended"
 	end
 	for _, s in ipairs(session.scenarios) do
 		if s.id == scenarioId then
-			return false, "Kịch bản đang diễn ra"
+			return false, "That scenario is already running"
 		end
 	end
 	local entry = { id = scenarioId, monthsActive = 0 }
@@ -1072,38 +1072,38 @@ local Scenarios = {}
 Scenarios.CATALOG = {
 	{
 		id = "recession",
-		name = "Suy thoái kinh tế",
+		name = "Recession",
 		kind = "recession",
 		severity = 6,
 		durationMonths = 4,
-		description = "Người dân thắt lưng buộc bụng: doanh thu của mọi cửa hàng, nhà máy, văn phòng chỉ còn 70%.",
+		description = "People tighten their belts: revenue at every shop, factory and office drops to 70%.",
 		effects = { revenueMultiplier = 0.7 },
 	},
 	{
 		id = "supply",
-		name = "Đứt gãy chuỗi cung ứng",
+		name = "Supply chain breakdown",
 		kind = "supply",
 		severity = 5,
 		durationMonths = 4,
-		description = "Nhà máy chỉ giao được một nửa số hàng: shop thiếu hàng để bán.",
+		description = "Factories deliver only half their goods: shops run short of things to sell.",
 		effects = { goodsMultiplier = 0.5 },
 	},
 	{
 		id = "pandemic",
-		name = "Đại dịch",
+		name = "Pandemic",
 		kind = "pandemic",
 		severity = 8,
 		durationMonths = 6,
-		description = "Dịch bệnh lan rộng: mỗi tháng 2% dân rời thành phố, hạnh phúc giảm 10 điểm.",
+		description = "A disease spreads: 2% of residents leave each month and happiness drops 10 points.",
 		effects = { leaveRate = 0.02, happinessPenalty = -10 },
 	},
 	{
 		id = "prices",
-		name = "Bão giá vật liệu",
+		name = "Material price shock",
 		kind = "prices",
 		severity = 5,
 		durationMonths = 5,
-		description = "Giá vật liệu tăng vọt: xây mới đắt gấp 1,5 lần, chi phí bảo trì tăng 30%.",
+		description = "Material prices soar: new buildings cost 1.5 times as much and upkeep rises 30%.",
 		effects = { priceMultiplier = 1.5, maintenanceMultiplier = 1.3 },
 	},
 }
@@ -1129,12 +1129,12 @@ Scenarios.EFFECT_RULES = {
 
 -- kịch bản giáo viên tự tạo: cùng 6 hiệu ứng, kẹp trong khoảng an toàn
 Scenarios.CUSTOM_EFFECTS = {
-	{ key = "revenueMultiplier", label = "Hệ số doanh thu", min = 0.5, max = 1, step = 0.05, default = 1, kind = "multiplier" },
-	{ key = "maintenanceMultiplier", label = "Hệ số chi phí bảo trì", min = 1, max = 2, step = 0.1, default = 1, kind = "multiplier" },
-	{ key = "priceMultiplier", label = "Hệ số giá xây", min = 1, max = 2, step = 0.1, default = 1, kind = "multiplier" },
-	{ key = "goodsMultiplier", label = "Hệ số hàng hoá cho shop", min = 0.2, max = 1, step = 0.1, default = 1, kind = "multiplier" },
-	{ key = "happinessPenalty", label = "Thay đổi hạnh phúc (điểm)", min = -30, max = 0, step = 1, default = 0, kind = "number" },
-	{ key = "leaveRate", label = "Dân bỏ đi mỗi tháng", min = 0, max = 0.05, step = 0.005, default = 0, kind = "percent" },
+	{ key = "revenueMultiplier", label = "Revenue multiplier", min = 0.5, max = 1, step = 0.05, default = 1, kind = "multiplier" },
+	{ key = "maintenanceMultiplier", label = "Upkeep multiplier", min = 1, max = 2, step = 0.1, default = 1, kind = "multiplier" },
+	{ key = "priceMultiplier", label = "Build price multiplier", min = 1, max = 2, step = 0.1, default = 1, kind = "multiplier" },
+	{ key = "goodsMultiplier", label = "Shop goods multiplier", min = 0.2, max = 1, step = 0.1, default = 1, kind = "multiplier" },
+	{ key = "happinessPenalty", label = "Happiness change (points)", min = -30, max = 0, step = 1, default = 0, kind = "number" },
+	{ key = "leaveRate", label = "Residents leaving per month", min = 0, max = 0.05, step = 0.005, default = 0, kind = "percent" },
 }
 
 local function clampStep(value, field)
@@ -1149,7 +1149,7 @@ end
 -- chuẩn hoá kịch bản client gửi lên. tên/mô tả thì server lọc riêng
 function Scenarios.sanitizeCustom(input)
 	if type(input) ~= "table" then
-		return nil, "Dữ liệu kịch bản không hợp lệ"
+		return nil, "Invalid scenario data"
 	end
 	local severity = tonumber(input.severity) or 5
 	local duration = tonumber(input.durationMonths) or 3
@@ -1164,7 +1164,7 @@ function Scenarios.sanitizeCustom(input)
 		end
 	end
 	if not any then
-		return nil, "Kịch bản cần ít nhất một hiệu ứng"
+		return nil, "A scenario needs at least one effect"
 	end
 	return {
 		severity = math.max(1, math.min(10, math.floor(severity + 0.5))),
@@ -1438,11 +1438,11 @@ function AdminService:_resolve(input)
 		input = tostring(math.floor(input))
 	end
 	if type(input) ~= "string" then
-		return nil, "Hãy nhập tên đăng nhập hoặc UserId"
+		return nil, "Enter a username or UserId"
 	end
 	input = input:gsub("^%s+", ""):gsub("%s+$", ""):gsub("^@", "")
 	if #input == 0 or #input > 40 then
-		return nil, "Hãy nhập tên đăng nhập hoặc UserId"
+		return nil, "Enter a username or UserId"
 	end
 	if input:match("^%d+$") then
 		local userId = tonumber(input)
@@ -1456,14 +1456,14 @@ function AdminService:_resolve(input)
 		return userId, name or ("#" .. input)
 	end
 	if not input:match("^[%w_]+$") then
-		return nil, "Tên đăng nhập chỉ gồm chữ, số và dấu _"
+		return nil, "Usernames only contain letters, numbers and _"
 	end
 	if not self.getUserIdFromName then
-		return nil, "Không tra được tên đăng nhập ở môi trường này"
+		return nil, "Usernames can't be looked up here"
 	end
 	local ok, userId = pcall(self.getUserIdFromName, input)
 	if not ok or type(userId) ~= "number" then
-		return nil, "Không tìm thấy người dùng Roblox tên \"" .. input .. "\""
+		return nil, "No Roblox user named \"" .. input .. "\""
 	end
 	return userId, input
 end
@@ -1483,13 +1483,13 @@ end
 
 function AdminService:getState(ownerId)
 	if not self.isOwner(ownerId) then
-		return false, "Chỉ chủ game mới dùng được bảng quản trị"
+		return false, "Only the game owner can use the admin panel"
 	end
 	local ok1, teachers = self.persistence:get(STORE, "teachers")
 	local ok2, bans = self.persistence:get(STORE, "bans")
 	local ok3, log = self.persistence:get(STORE, "log")
 	if not (ok1 and ok2 and ok3) then
-		return false, "Không tải được dữ liệu quản trị"
+		return false, "Couldn't load admin data"
 	end
 	return true, {
 		teachers = sortedList(teachers),
@@ -1508,7 +1508,7 @@ end
 
 function AdminService:addTeacher(ownerId, input)
 	if not self.isOwner(ownerId) then
-		return false, "Chỉ chủ game mới thêm được giáo viên"
+		return false, "Only the game owner can add teachers"
 	end
 	local userId, nameOrErr = self:_resolve(input)
 	if not userId then
@@ -1520,7 +1520,7 @@ function AdminService:addTeacher(ownerId, input)
 		return map
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	self:_log(ownerId, "addTeacher", nameOrErr .. " (" .. userId .. ")")
 	self:_teachersChanged()
@@ -1529,11 +1529,11 @@ end
 
 function AdminService:removeTeacher(ownerId, userId)
 	if not self.isOwner(ownerId) then
-		return false, "Chỉ chủ game mới bớt được giáo viên"
+		return false, "Only the game owner can remove teachers"
 	end
 	userId = tonumber(userId)
 	if not userId then
-		return false, "UserId không hợp lệ"
+		return false, "Invalid UserId"
 	end
 	local removed = false
 	local ok = self.persistence:update(STORE, "teachers", function(old)
@@ -1546,10 +1546,10 @@ function AdminService:removeTeacher(ownerId, userId)
 		return old
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	if not removed then
-		return false, "Người này không có trong danh sách giáo viên"
+		return false, "This person isn't on the teacher list"
 	end
 	self:_log(ownerId, "removeTeacher", tostring(userId))
 	self:_teachersChanged()
@@ -1559,26 +1559,26 @@ end
 -- days 0/nil = cấm vĩnh viễn
 function AdminService:ban(ownerId, input, days, reason)
 	if not self.isOwner(ownerId) then
-		return false, "Chỉ chủ game mới cấm được người chơi"
+		return false, "Only the game owner can ban players"
 	end
 	local userId, nameOrErr = self:_resolve(input)
 	if not userId then
 		return false, nameOrErr
 	end
 	if userId == ownerId then
-		return false, "Không thể tự cấm chính mình"
+		return false, "You can't ban yourself"
 	end
 	days = math.floor(tonumber(days) or 0)
 	if days < 0 or days > 3650 then
-		return false, "Số ngày không hợp lệ"
+		return false, "Invalid number of days"
 	end
-	reason = Util.cleanUserText(reason, 100, 300) or "Vi phạm nội quy lớp học"
+	reason = Util.cleanUserText(reason, 100, 300) or "Broke the class rules"
 	if not self.banUser then
-		return false, "Chức năng cấm chỉ chạy khi game đã publish"
+		return false, "Banning only works in a published game"
 	end
 	local ok, err = pcall(self.banUser, userId, days > 0 and days * 86400 or -1, reason)
 	if not ok then
-		return false, "Roblox từ chối lệnh cấm: " .. tostring(err)
+		return false, "Roblox rejected the ban: " .. tostring(err)
 	end
 	self.persistence:update(STORE, "bans", function(old)
 		local map = type(old) == "table" and old or {}
@@ -1591,18 +1591,18 @@ end
 
 function AdminService:unban(ownerId, userId)
 	if not self.isOwner(ownerId) then
-		return false, "Chỉ chủ game mới bỏ cấm được"
+		return false, "Only the game owner can unban"
 	end
 	userId = tonumber(userId)
 	if not userId then
-		return false, "UserId không hợp lệ"
+		return false, "Invalid UserId"
 	end
 	if not self.unbanUser then
-		return false, "Chức năng này chỉ chạy khi game đã publish"
+		return false, "This only works in a published game"
 	end
 	local ok, err = pcall(self.unbanUser, userId)
 	if not ok then
-		return false, "Roblox từ chối lệnh bỏ cấm: " .. tostring(err)
+		return false, "Roblox rejected the unban: " .. tostring(err)
 	end
 	self.persistence:update(STORE, "bans", function(old)
 		if type(old) ~= "table" or not old[tostring(userId)] then
@@ -1618,23 +1618,23 @@ end
 -- xoá hết data của 1 UserId (Roblox gửi yêu cầu Right to be Forgotten qua tin nhắn)
 function AdminService:deleteUserData(ownerId, input)
 	if not self.isOwner(ownerId) then
-		return false, "Chỉ chủ game mới xoá được dữ liệu"
+		return false, "Only the game owner can delete data"
 	end
 	local userId, nameOrErr = self:_resolve(input)
 	if not userId then
 		return false, nameOrErr
 	end
 	if self.isInServer and self.isInServer(userId) then
-		return false, "Người này đang ở trong server, hãy xoá sau khi họ rời game"
+		return false, "This person is on this server, delete their data after they leave"
 	end
 	local key = "u_" .. tostring(userId)
 	local okRead, profile = self.persistence:get(Config.DATASTORE.profiles, key)
 	if not okRead then
-		return false, "Không đọc được dữ liệu, hãy thử lại"
+		return false, "Couldn't read the data, please try again"
 	end
 	if type(profile) == "table" and type(profile.lock) == "table"
 		and (self.now() - (tonumber(profile.lock.at) or 0)) < Config.SESSION_LOCK_STALE_SECONDS then
-		return false, "Người này đang chơi ở server khác, thử lại sau vài phút"
+		return false, "This person is playing on another server, try again in a few minutes"
 	end
 	local report = { profile = profile ~= nil, classesLeft = 0, classesDeleted = 0 }
 	local classes = type(profile) == "table" and type(profile.classes) == "table" and profile.classes or {}
@@ -1694,9 +1694,9 @@ function AdminService:deleteUserData(ownerId, input)
 	-- 4. profile xoá cuối: bước trước lỗi thì chạy lại vẫn còn list lớp để dọn
 	local okRemove = self.persistence:remove(Config.DATASTORE.profiles, key)
 	if not okRemove then
-		return false, "Xoá hồ sơ thất bại, hãy chạy lại lệnh"
+		return false, "Deleting the profile failed, please run it again"
 	end
-	self:_log(ownerId, "deleteUserData", "(đã ẩn)")
+	self:_log(ownerId, "deleteUserData", "(hidden)")
 	self:_teachersChanged()
 	return true, report
 end
@@ -1904,24 +1904,24 @@ end
 
 function ClassroomService:createClass(teacherId, teacherName, className)
 	if not self.isTeacher(teacherId) then
-		return false, "Chỉ giáo viên mới tạo được lớp"
+		return false, "Only teachers can create classes"
 	end
 	local profile = self.sessions:getProfile(teacherId)
 	if not profile then
-		return false, "Dữ liệu chưa tải xong, thử lại sau giây lát"
+		return false, "Data is still loading, try again in a moment"
 	end
 	className = trimName(className)
 	if not className then
-		return false, "Hãy nhập tên lớp"
+		return false, "Enter a class name"
 	end
 	if #profile.teaching >= Config.MAX_CLASSES_PER_TEACHER then
-		return false, "Đã đạt số lớp tối đa (" .. Config.MAX_CLASSES_PER_TEACHER .. ")"
+		return false, "You've reached the class limit (" .. Config.MAX_CLASSES_PER_TEACHER .. ")"
 	end
 	-- tên lớp hiện cho HS nên phải lọc. Lọc lỗi thì dùng "Lớp <mã>"
 	local filteredName = self:_filter(className, teacherId)
 	for _ = 1, 8 do
 		local code = self:_generateCode()
-		local finalName = filteredName or ("Lớp " .. code)
+		local finalName = filteredName or ("Class " .. code)
 		local created = nil
 		local ok = self.persistence:update(Config.DATASTORE.classes, classKey(code), function(old)
 			created = nil
@@ -1946,16 +1946,16 @@ function ClassroomService:createClass(teacherId, teacherName, className)
 			return true, { code = code, name = finalName, renamed = filteredName == nil }
 		end
 		if not ok then
-			return false, "Lỗi lưu trữ, hãy thử lại"
+			return false, "Storage error, please try again"
 		end
 	end
-	return false, "Không tạo được mã lớp, hãy thử lại"
+	return false, "Couldn't create a class code, please try again"
 end
 
 function ClassroomService:getTeacherClasses(teacherId)
 	local profile = self.sessions:getProfile(teacherId)
 	if not profile then
-		return false, "Dữ liệu chưa tải xong, thử lại sau giây lát"
+		return false, "Data is still loading, try again in a moment"
 	end
 	local out = {}
 	for _, code in ipairs(profile.teaching) do
@@ -1976,10 +1976,10 @@ end
 function ClassroomService:_assertOwner(teacherId, code)
 	local record = self:getClass(code)
 	if not record then
-		return nil, "Không tìm thấy lớp"
+		return nil, "Class not found"
 	end
 	if record.teacherId ~= teacherId then
-		return nil, "Bạn không phải giáo viên của lớp này"
+		return nil, "You're not the teacher of this class"
 	end
 	return record
 end
@@ -2072,7 +2072,7 @@ function ClassroomService:getStudentDetail(teacherId, code, studentId)
 	studentId = tonumber(studentId)
 	local member = studentId and (record.members or {})[tostring(studentId)]
 	if not member then
-		return false, "Học sinh không thuộc lớp này"
+		return false, "That student isn't in this class"
 	end
 	local detail, online = self:_memberProgress(record, studentId, member)
 	return true, {
@@ -2151,7 +2151,7 @@ end
 
 function ClassroomService:listScenarios(teacherId)
 	if not self.isTeacher(teacherId) then
-		return false, "Chỉ dành cho giáo viên"
+		return false, "Teachers only"
 	end
 	local catalog = {}
 	for _, s in ipairs(Scenarios.CATALOG) do
@@ -2165,7 +2165,7 @@ function ClassroomService:listScenarios(teacherId)
 	end
 	local data = self:_loadCustomScenarios(teacherId)
 	if not data then
-		return false, "Không tải được kịch bản tuỳ chỉnh"
+		return false, "Couldn't load custom scenarios"
 	end
 	return true, { catalog = catalog, custom = data.list, max = Config.MAX_CUSTOM_SCENARIOS }
 end
@@ -2173,14 +2173,14 @@ end
 -- payload: { name, description, severity, durationMonths, effects }
 function ClassroomService:createScenario(teacherId, payload)
 	if not self.isTeacher(teacherId) then
-		return false, "Chỉ giáo viên mới tạo được kịch bản"
+		return false, "Only teachers can create scenarios"
 	end
 	if type(payload) ~= "table" then
-		return false, "Dữ liệu không hợp lệ"
+		return false, "Invalid data"
 	end
 	local name = trimName(payload.name)
 	if not name then
-		return false, "Hãy đặt tên cho kịch bản"
+		return false, "Give the scenario a name"
 	end
 	local description = Util.cleanUserText(payload.description, MAX_DESCRIPTION_CHARS, 400) or ""
 	local clean, err = Scenarios.sanitizeCustom(payload)
@@ -2190,13 +2190,13 @@ function ClassroomService:createScenario(teacherId, payload)
 	-- tên/mô tả hiện cho HS, lọc trước khi lưu
 	local filteredName = self:_filter(name, teacherId)
 	if not filteredName then
-		return false, "Chưa kiểm duyệt được tên kịch bản, hãy thử lại sau"
+		return false, "The scenario name couldn't be checked, try again later"
 	end
 	local filteredDescription = ""
 	if description ~= "" then
 		filteredDescription = self:_filter(description, teacherId)
 		if not filteredDescription then
-			return false, "Chưa kiểm duyệt được mô tả, hãy thử lại sau"
+			return false, "The description couldn't be checked, try again later"
 		end
 	end
 	local created, reason = nil, nil
@@ -2204,7 +2204,7 @@ function ClassroomService:createScenario(teacherId, payload)
 		created, reason = nil, nil
 		local data = (type(old) == "table" and type(old.list) == "table") and old or { nextId = 1, list = {} }
 		if #data.list >= Config.MAX_CUSTOM_SCENARIOS then
-			reason = "Đã đạt số kịch bản tối đa (" .. Config.MAX_CUSTOM_SCENARIOS .. ")"
+			reason = "You've reached the scenario limit (" .. Config.MAX_CUSTOM_SCENARIOS .. ")"
 			return nil
 		end
 		local n = tonumber(data.nextId) or (#data.list + 1)
@@ -2222,20 +2222,20 @@ function ClassroomService:createScenario(teacherId, payload)
 		return data
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	if not created then
-		return false, reason or "Không tạo được kịch bản"
+		return false, reason or "Couldn't create the scenario"
 	end
 	return true, created
 end
 
 function ClassroomService:deleteScenario(teacherId, scenarioId)
 	if not self.isTeacher(teacherId) then
-		return false, "Chỉ dành cho giáo viên"
+		return false, "Teachers only"
 	end
 	if type(scenarioId) ~= "string" then
-		return false, "Kịch bản không hợp lệ"
+		return false, "Invalid scenario"
 	end
 	local removed = false
 	local ok = self.persistence:update(Config.DATASTORE.scenarios, scenarioStoreKey(teacherId), function(old)
@@ -2255,10 +2255,10 @@ function ClassroomService:deleteScenario(teacherId, scenarioId)
 		return old
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	if not removed then
-		return false, "Không tìm thấy kịch bản"
+		return false, "Scenario not found"
 	end
 	return true
 end
@@ -2280,7 +2280,7 @@ function ClassroomService:_applyEntry(userId, profile, code, entry, silent)
 	end
 	local added = GameTick.addScenario(session, entry.scenarioId, { classCode = code, assignedBy = entry.by }, entry.def)
 	if added and self.notify and not silent then
-		self.notify(userId, "Giáo viên vừa gán sự kiện: " .. self:_scenarioName(entry))
+		self.notify(userId, "Your teacher just assigned an event: " .. self:_scenarioName(entry))
 	end
 	return added and true or false
 end
@@ -2304,13 +2304,13 @@ function ClassroomService:assignScenario(teacherId, code, scenarioId)
 		return false, err
 	end
 	if type(scenarioId) ~= "string" then
-		return false, "Kịch bản không tồn tại"
+		return false, "Scenario doesn't exist"
 	end
 	local def = nil
 	if not Scenarios.get(scenarioId) then
 		local data = self:_loadCustomScenarios(teacherId)
 		if not data then
-			return false, "Không tải được kịch bản tuỳ chỉnh"
+			return false, "Couldn't load custom scenarios"
 		end
 		for _, s in ipairs(data.list) do
 			if s.id == scenarioId then
@@ -2324,7 +2324,7 @@ function ClassroomService:assignScenario(teacherId, code, scenarioId)
 			end
 		end
 		if not def then
-			return false, "Kịch bản không tồn tại"
+			return false, "Scenario doesn't exist"
 		end
 	end
 	-- ghi log lớp trước (HS vắng nhận sau), rồi mới áp cho người đang chơi
@@ -2348,7 +2348,7 @@ function ClassroomService:assignScenario(teacherId, code, scenarioId)
 		return old
 	end)
 	if not ok or not entry then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	local appliedHere = self:applyEntryLocally(record.code, entry)
 	local broadcast = false
@@ -2395,7 +2395,7 @@ function ClassroomService:syncPendingScenarios(userId, profile)
 		end
 	end
 	if applied > 0 and self.notify then
-		self.notify(userId, "Trong lúc bạn vắng mặt, giáo viên đã gán " .. applied .. " sự kiện mới.")
+		self.notify(userId, "While you were away, your teacher assigned new events: " .. applied .. ".")
 	end
 	return applied
 end
@@ -2447,7 +2447,7 @@ function ClassroomService:onMessage(message)
 				return
 			end
 			entry.def = {
-				name = Util.cleanUserText(entry.def.name, MAX_NAME_CHARS, Config.MAX_TEXT_BYTES) or "Sự kiện của giáo viên",
+				name = Util.cleanUserText(entry.def.name, MAX_NAME_CHARS, Config.MAX_TEXT_BYTES) or "Teacher event",
 				description = Util.cleanUserText(entry.def.description, MAX_DESCRIPTION_CHARS, 400) or "",
 				severity = clean.severity,
 				durationMonths = clean.durationMonths,
@@ -2456,7 +2456,7 @@ function ClassroomService:onMessage(message)
 		end
 		self:applyEntryLocally(code, entry)
 	elseif message.kind == "roomOpened" then
-		self:_notifyMembersHere(code, "Giáo viên đã mở phòng học riêng cho lớp " .. code .. ". Mở mục Lớp học để vào phòng.")
+		self:_notifyMembersHere(code, "Your teacher opened a private classroom for class " .. code .. ". Open Class to join.")
 	end
 end
 
@@ -2483,11 +2483,11 @@ function ClassroomService:openRoom(teacherId, code)
 		return true, { code = record.code, reused = true }
 	end
 	if not self.reserveServer then
-		return false, "Phòng học riêng chỉ chạy khi game đã publish"
+		return false, "Private classrooms only work in a published game"
 	end
 	local okReserve, accessCode, privateServerId = pcall(self.reserveServer)
 	if not okReserve or type(accessCode) ~= "string" then
-		return false, "Phòng học riêng chỉ chạy khi game đã publish, trong Studio thì không"
+		return false, "Private classrooms only work in a published game, not in Studio"
 	end
 	local saved = false
 	local ok = self.persistence:update(Config.DATASTORE.classes, classKey(record.code), function(old)
@@ -2504,9 +2504,9 @@ function ClassroomService:openRoom(teacherId, code)
 		return old
 	end)
 	if not ok or not saved then
-		return false, "Không lưu được phòng học, hãy thử lại"
+		return false, "Couldn't save the classroom, please try again"
 	end
-	self:_notifyMembersHere(record.code, "Giáo viên đã mở phòng học riêng cho lớp " .. record.code .. ". Mở mục Lớp học để vào phòng.")
+	self:_notifyMembersHere(record.code, "Your teacher opened a private classroom for class " .. record.code .. ". Open Class to join.")
 	if self.publish then
 		self.publish({ kind = "roomOpened", code = record.code })
 	end
@@ -2526,7 +2526,7 @@ function ClassroomService:closeRoom(teacherId, code)
 		return old
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	return true
 end
@@ -2534,24 +2534,24 @@ end
 function ClassroomService:enterRoom(userId, code)
 	local record = self:getClass(code)
 	if not record then
-		return false, "Không tìm thấy lớp"
+		return false, "Class not found"
 	end
 	local isMember = record.teacherId == userId or self:_isMemberRecord(record, userId)
 	if not isMember then
-		return false, "Bạn chưa tham gia lớp này"
+		return false, "You haven't joined this class"
 	end
 	if not record.room or not record.room.accessCode then
-		return false, "Lớp chưa mở phòng học riêng"
+		return false, "This class has no private classroom open"
 	end
 	if self:_inThisRoom(record) then
-		return false, "Bạn đang ở trong phòng học riêng của lớp này rồi"
+		return false, "You're already in this class's private classroom"
 	end
 	if not self.teleportToRoom then
-		return false, "Phòng học riêng chỉ chạy khi game đã publish"
+		return false, "Private classrooms only work in a published game"
 	end
 	local ok, err = pcall(self.teleportToRoom, userId, record.room.accessCode)
 	if not ok then
-		return false, "Không chuyển được vào phòng: " .. tostring(err)
+		return false, "Couldn't move you to the classroom: " .. tostring(err)
 	end
 	return true
 end
@@ -2561,34 +2561,34 @@ end
 function ClassroomService:joinClass(userId, name, code)
 	code = normalizeCode(code)
 	if not code then
-		return false, "Mã lớp không hợp lệ"
+		return false, "Invalid class code"
 	end
 	local profile = self.sessions:getProfile(userId)
 	if not profile then
-		return false, "Dữ liệu chưa tải xong, thử lại sau giây lát"
+		return false, "Data is still loading, try again in a moment"
 	end
 	if contains(profile.classes, code) then
-		return false, "Bạn đã ở trong lớp này rồi"
+		return false, "You're already in this class"
 	end
 	if #profile.classes >= Config.MAX_CLASSES_PER_STUDENT then
-		return false, "Bạn đã tham gia tối đa " .. Config.MAX_CLASSES_PER_STUDENT .. " lớp"
+		return false, "You've already joined the maximum of " .. Config.MAX_CLASSES_PER_STUDENT .. " classes"
 	end
 	local joined, reason, lastSeq = nil, nil, 0
 	local ok = self.persistence:update(Config.DATASTORE.classes, classKey(code), function(old)
 		joined, reason, lastSeq = nil, nil, 0
 		if type(old) ~= "table" then
-			reason = "Không tìm thấy lớp với mã " .. code
+			reason = "No class found with code " .. code
 			return nil
 		end
 		if old.teacherId == userId then
-			reason = "Bạn là giáo viên của lớp này"
+			reason = "You're the teacher of this class"
 			return nil
 		end
 		old.members = old.members or {}
 		local key = tostring(userId)
 		if not old.members[key] then
 			if countMembers(old) >= Config.MAX_CLASS_MEMBERS then
-				reason = "Lớp đã đủ học sinh"
+				reason = "This class is full"
 				return nil
 			end
 			old.members[key] = { name = name, joinedAt = self.now() }
@@ -2600,10 +2600,10 @@ function ClassroomService:joinClass(userId, name, code)
 		return old
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	if not joined then
-		return false, reason or "Không tham gia được lớp"
+		return false, reason or "Couldn't join the class"
 	end
 	table.insert(profile.classes, code)
 	-- sự kiện gán trước lúc vào lớp thì không áp cho HS mới
@@ -2618,10 +2618,10 @@ function ClassroomService:leaveClass(userId, code)
 	code = normalizeCode(code)
 	local profile = self.sessions:getProfile(userId)
 	if not code or not profile then
-		return false, "Mã lớp không hợp lệ"
+		return false, "Invalid class code"
 	end
 	if not contains(profile.classes, code) then
-		return false, "Bạn không ở trong lớp này"
+		return false, "You're not in this class"
 	end
 	local ok = self.persistence:update(Config.DATASTORE.classes, classKey(code), function(old)
 		if type(old) ~= "table" or not old.members or not old.members[tostring(userId)] then
@@ -2631,7 +2631,7 @@ function ClassroomService:leaveClass(userId, code)
 		return old
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	for i = #profile.classes, 1, -1 do
 		if profile.classes[i] == code then
@@ -2648,7 +2648,7 @@ end
 function ClassroomService:getMyClasses(userId)
 	local profile = self.sessions:getProfile(userId)
 	if not profile then
-		return false, "Dữ liệu chưa tải xong, thử lại sau giây lát"
+		return false, "Data is still loading, try again in a moment"
 	end
 	local out = {}
 	for _, code in ipairs(profile.classes) do
@@ -2754,7 +2754,7 @@ function ClassroomService:persistProgress(userId, profile, leaving)
 	end)
 	self.pendingWrites = self.pendingWrites - 1
 	if not ok then
-		print("[EconCity] Lỗi lưu tiến độ lớp: " .. tostring(err))
+		print("[EconCity] Error saving class progress: " .. tostring(err))
 	end
 end
 
@@ -2863,7 +2863,7 @@ function LeaderboardService:_nameOf(userId)
 	if cached then
 		return cached
 	end
-	local fallback = "Người chơi " .. tostring(userId)
+	local fallback = "Player " .. tostring(userId)
 	local failedAt = self.nameFailedAt[userId]
 	if not self.resolveName or (failedAt and self.clock() - failedAt < NAME_RETRY_SECONDS) then
 		return fallback
@@ -2898,18 +2898,18 @@ function LeaderboardService:top(scope, code, viewerId)
 	local storeName
 	if scope == "class" then
 		if type(code) ~= "string" or code == "" then
-			return false, "Chưa chọn lớp"
+			return false, "No class selected"
 		end
 		if not self.getClass then
-			return false, "Chưa xem được bảng xếp hạng lớp"
+			return false, "Class leaderboard isn't available"
 		end
 		local record = self.getClass(code)
 		if not record then
-			return false, "Không tìm thấy lớp"
+			return false, "Class not found"
 		end
 		local isMember = record.teacherId == viewerId or (record.members or {})[tostring(viewerId)] ~= nil
 		if not isMember then
-			return false, "Bạn không thuộc lớp này"
+			return false, "You're not in this class"
 		end
 		storeName = classStore(record.code)
 		code = record.code
@@ -2920,7 +2920,7 @@ function LeaderboardService:top(scope, code, viewerId)
 	end
 	local ok, entries = self:_entries(storeName)
 	if not ok then
-		return false, "Không tải được bảng xếp hạng"
+		return false, "Couldn't load the leaderboard"
 	end
 	if self.resolveNames then
 		local missing = {}
@@ -3057,7 +3057,7 @@ sessions = SessionService.new({
 		end
 		for _, scenario in ipairs(result.finishedScenarios or {}) do
 			local def = Scenarios.get(scenario.id)
-			notify(userId, "Sự kiện đã kết thúc: " .. ((def and def.name) or scenario.name or tostring(scenario.id)))
+			notify(userId, "Event ended: " .. ((def and def.name) or scenario.name or tostring(scenario.id)))
 		end
 	end,
 	onSessionFinished = function(userId, profile)
@@ -3065,9 +3065,9 @@ sessions = SessionService.new({
 			classroom:persistProgress(userId, profile)
 		end)
 		if profile.session.status == GameTick.STATUS.ENDED then
-			notify(userId, string.format("Chúc mừng! Bạn đã hoàn thành nhiệm kỳ %d tháng.", Config.GAME_DURATION_MONTHS))
+			notify(userId, string.format("Congratulations! You finished your %d-month term.", Config.GAME_DURATION_MONTHS))
 		else
-			notify(userId, "Thành phố phá sản. Hãy thử lại với cách xây và mức thuế khác!")
+			notify(userId, "The city went bankrupt. Try again with a different layout and tax rate!")
 		end
 	end,
 })
@@ -3118,7 +3118,7 @@ classroom = ClassroomService.new({
 	teleportToRoom = function(userId, accessCode)
 		local player = Players:GetPlayerByUserId(userId)
 		if not player then
-			error("Người chơi không còn trong server")
+			error("That player is no longer on this server")
 		end
 		-- lưu cuối + nhả lock trước khi teleport để server mới đọc được data mới nhất.
 		-- tóm tắt lớp thì ghi 1 lần lúc thật sự rời server này
@@ -3215,13 +3215,13 @@ if persistence.mode == "datastore" then
 					admin:onMessage(packet.Data)
 				end)
 				if not okMsg then
-					warn("[EconCity] Lỗi xử lý thông điệp: " .. tostring(msgErr))
+					warn("[EconCity] Message handling error: " .. tostring(msgErr))
 				end
 			end)
 		end)
 		messagingReady = ok
 		if not ok then
-			warn("[EconCity] MessagingService không khả dụng: " .. tostring(err))
+			warn("[EconCity] MessagingService unavailable: " .. tostring(err))
 		end
 	end)
 end
@@ -3241,7 +3241,7 @@ pushState = function(player, reason)
 		end
 	end)
 	if not ok then
-		warn("[EconCity] Lỗi gửi trạng thái: " .. tostring(err))
+		warn("[EconCity] Error sending state: " .. tostring(err))
 	end
 end
 
@@ -3259,14 +3259,14 @@ local function onPlayerAdded(player)
 		classroom:syncPendingScenarios(userId, profile)
 	end)
 	if not okSync then
-		warn("[EconCity] Lỗi đồng bộ sự kiện lớp: " .. tostring(syncErr))
+		warn("[EconCity] Class event sync error: " .. tostring(syncErr))
 	end
 	if not player.Parent then
 		sessions:unloadPlayer(userId)
 		return
 	end
 	if profile.loadFailed then
-		noticeEvent:FireClient(player, "Không tải được dữ liệu đã lưu nên ván này sẽ không được lưu.")
+		noticeEvent:FireClient(player, "Saved data couldn't be loaded, so this game won't be saved.")
 	end
 	pushState(player, "init")
 end
@@ -3300,7 +3300,7 @@ end)
 -- teleport vào phòng riêng fail sau khi TeleportAsync đã return: chơi tiếp ở đây
 TeleportService.TeleportInitFailed:Connect(function(player, result, message)
 	if sessions:teleportFailed(player.UserId) then
-		notify(player.UserId, "Không vào được phòng học riêng (" .. tostring(message or result) .. "). Bạn tiếp tục chơi ở đây.")
+		notify(player.UserId, "Couldn't join the private classroom (" .. tostring(message or result) .. "). You can keep playing here.")
 		pushState(player, "teleportFailed")
 	end
 end)
@@ -3347,7 +3347,7 @@ task.spawn(function()
 			end
 		end)
 		if not okLoop then
-			warn("[EconCity] Lỗi vòng tick: " .. tostring(loopErr))
+			warn("[EconCity] Tick loop error: " .. tostring(loopErr))
 			sessions.nextTickAt = Workspace:GetServerTimeNow() + Config.TICK_SECONDS
 		end
 	end
@@ -3358,14 +3358,14 @@ local handlers = {}
 
 local function requireTeacher(player)
 	if not Roles.isTeacher(player) then
-		return false, "Chỉ dành cho giáo viên"
+		return false, "Teachers only"
 	end
 	return true
 end
 
 local function requireOwner(player)
 	if not Roles.isOwner(player) then
-		return false, "Chỉ chủ game mới dùng được chức năng này"
+		return false, "Only the game owner can use this"
 	end
 	return true
 end
@@ -3431,19 +3431,19 @@ end
 
 handlers.tickNow = function(player)
 	if not IS_STUDIO then
-		return false, "Chỉ dùng được trong Roblox Studio"
+		return false, "Only available in Roblox Studio"
 	end
 	local result = sessions:tickOne(player.UserId)
 	pushState(player, result and "tick" or "clock")
 	if not result then
-		return false, "Ván đang không chạy"
+		return false, "The game isn't running"
 	end
 	return true
 end
 
 handlers.demoBuild = function(player)
 	if not IS_STUDIO then
-		return false, "Chỉ dùng được trong Roblox Studio"
+		return false, "Only available in Roblox Studio"
 	end
 	local ok, data = sessions:demoBuild(player.UserId)
 	if ok then
@@ -3596,10 +3596,10 @@ end
 
 requestFunction.OnServerInvoke = function(player, action, payload)
 	if type(action) ~= "string" or not Net.ACTIONS[action] or not handlers[action] then
-		return { ok = false, error = "Hành động không hợp lệ" }
+		return { ok = false, error = "Invalid action" }
 	end
 	if payload ~= nil and type(payload) ~= "table" then
-		return { ok = false, error = "Dữ liệu không hợp lệ" }
+		return { ok = false, error = "Invalid data" }
 	end
 	local userId = player.UserId
 	-- rate limit kiểu token bucket: cho burst vài request (mở bảng gọi 2-3 API cùng lúc), chặn spam liên tục
@@ -3612,11 +3612,11 @@ requestFunction.OnServerInvoke = function(player, action, payload)
 	bucket.tokens = math.min(Config.REQUEST_BURST, bucket.tokens + (now - bucket.at) * Config.REQUEST_REFILL_PER_SECOND)
 	bucket.at = now
 	if bucket.tokens < 1 then
-		return { ok = false, error = "Bạn thao tác quá nhanh" }
+		return { ok = false, error = "You're going too fast" }
 	end
 	bucket.tokens = bucket.tokens - 1
 	if not sessions:getProfile(userId) then
-		return { ok = false, error = "Đang tải dữ liệu, hãy thử lại sau giây lát" }
+		return { ok = false, error = "Still loading data, try again in a moment" }
 	end
 	-- cooldown riêng cho action tốn tài nguyên (DataStore, lọc chữ, teleport).
 	-- đánh dấu trước khi xử lý, không thì request gửi cùng lúc lách được cooldown
@@ -3626,11 +3626,11 @@ requestFunction.OnServerInvoke = function(player, action, payload)
 		local marks = lastActionAt[userId] or {}
 		lastActionAt[userId] = marks
 		if marks["busy:" .. action] then
-			return { ok = false, error = "Đang xử lý yêu cầu trước, hãy đợi" }
+			return { ok = false, error = "Still working on your last request, please wait" }
 		end
 		local last = marks[action]
 		if last and now - last < cooldown then
-			return { ok = false, error = string.format("Hãy đợi %d giây rồi thử lại", math.ceil(cooldown - (now - last))) }
+			return { ok = false, error = string.format("Please wait %ds and try again", math.ceil(cooldown - (now - last))) }
 		end
 		previous = last
 		marks[action] = now
@@ -3646,20 +3646,20 @@ requestFunction.OnServerInvoke = function(player, action, payload)
 		end
 	end
 	if not success then
-		warn("[EconCity] Lỗi xử lý " .. action .. ": " .. tostring(ok))
-		return { ok = false, error = "Server gặp lỗi, thử lại sau" }
+		warn("[EconCity] Error handling " .. action .. ": " .. tostring(ok))
+		return { ok = false, error = "Server error, try again later" }
 	end
 	if ok then
 		return { ok = true, data = data }
 	end
-	return { ok = false, error = data or "Không thực hiện được" }
+	return { ok = false, error = data or "Couldn't do that" }
 end
 
 print(string.format(
-	"[EconCity] Server v%s sẵn sàng, lưu trữ: %s%s, tick %ds",
+	"[EconCity] Server v%s ready, storage: %s%s, tick %ds",
 	Config.VERSION,
 	persistence.mode,
-	persistence.degraded and " (đang lỗi, thử lại từng lệnh)" or "",
+	persistence.degraded and " (failing, retrying per call)" or "",
 	Config.TICK_SECONDS
 ))
 ]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000E"><Properties><string name="Name">Persistence</string><ProtectedString name="Source"><![CDATA[-- Bọc DataStore / OrderedDataStore / MemoryStore. Hàm nào cũng có thể yield, chỉ gọi từ server.
@@ -3719,11 +3719,11 @@ function Persistence.new(options)
 		if ok then
 			self.mode = "datastore"
 		elseif options.allowMemoryFallback then
-			self._log("[EconCity] (Studio) DataStore không khả dụng, dùng bộ nhớ tạm: " .. tostring(lastErr))
+			self._log("[EconCity] (Studio) DataStore unavailable, using memory: " .. tostring(lastErr))
 		else
 			self.mode = "datastore"
 			self.degraded = true
-			self._log("[EconCity] DataStore đang lỗi lúc khởi động, sẽ thử lại cho từng lệnh: " .. tostring(lastErr))
+			self._log("[EconCity] DataStore failed at startup, will retry per call: " .. tostring(lastErr))
 		end
 	end
 	if self.mode == "datastore" and self._mss then
@@ -3749,7 +3749,7 @@ function Persistence:_retry(fn)
 			self._wait(attempt)
 		end
 	end
-	self._log("[EconCity] Lỗi lưu trữ: " .. tostring(lastErr))
+	self._log("[EconCity] Storage error: " .. tostring(lastErr))
 	return false, lastErr
 end
 
@@ -4236,7 +4236,7 @@ end
 function SessionService:clientReady(userId)
 	local profile = self.profiles[userId]
 	if not profile or not profile.session then
-		return false, "Dữ liệu chưa tải xong, thử lại sau giây lát"
+		return false, "Data is still loading, try again in a moment"
 	end
 	local session = profile.session
 	if session.waitingForClient then
@@ -4325,7 +4325,7 @@ function SessionService:requestSave(userId, final)
 				self:_write(userId, st.profile, st.final)
 			end)
 			if not ok then
-				print("[EconCity] Lỗi lưu hồ sơ " .. tostring(userId) .. ": " .. tostring(err))
+				print("[EconCity] Error saving profile " .. tostring(userId) .. ": " .. tostring(err))
 			end
 		until not st.again
 		st.running = false
@@ -4454,11 +4454,11 @@ local CITY_ACTIONS = {
 function SessionService:act(userId, action, a, b)
 	local profile = self.profiles[userId]
 	if not profile or not profile.session then
-		return false, "Chưa có ván chơi"
+		return false, "No game in progress"
 	end
 	local fn = CITY_ACTIONS[action]
 	if not fn then
-		return false, "Hành động không hợp lệ"
+		return false, "Invalid action"
 	end
 	return fn(profile.session, a, b)
 end
@@ -4467,10 +4467,10 @@ end
 function SessionService:demoBuild(userId)
 	local profile = self.profiles[userId]
 	if not profile or not profile.session then
-		return false, "Chưa có ván chơi"
+		return false, "No game in progress"
 	end
 	if GameTick.isFinished(profile.session) then
-		return false, "Ván đã kết thúc, hãy bắt đầu ván mới"
+		return false, "This game has ended, start a new one"
 	end
 	return true, { built = DemoBot.act(profile.session, DemoBot.SHOWCASE) }
 end
@@ -4478,12 +4478,12 @@ end
 function SessionService:togglePause(userId)
 	local profile = self.profiles[userId]
 	if not profile or not profile.session then
-		return false, "Chưa có ván chơi"
+		return false, "No game in progress"
 	end
 	local session = profile.session
 	if GameTick.isFinished(session) then
 		-- không cho "hồi sinh" phiên đã xong bằng nút pause
-		return false, "Ván đã kết thúc"
+		return false, "This game has ended"
 	end
 	if session.status == GameTick.STATUS.ACTIVE then
 		session.status = GameTick.STATUS.PAUSED
@@ -4518,7 +4518,7 @@ end
 function SessionService:newGame(userId)
 	local profile = self.profiles[userId]
 	if not profile then
-		return false, "Dữ liệu chưa tải xong, thử lại sau giây lát"
+		return false, "Data is still loading, try again in a moment"
 	end
 	local old = profile.session
 	-- ván chưa qua tháng nào thì không vào lịch sử
@@ -4533,7 +4533,7 @@ end
 function SessionService:addScenario(userId, scenarioId, meta, customDef)
 	local profile = self.profiles[userId]
 	if not profile or not profile.session then
-		return false, "Chưa có ván chơi"
+		return false, "No game in progress"
 	end
 	return GameTick.addScenario(profile.session, scenarioId, meta, customDef)
 end
@@ -4584,7 +4584,7 @@ function SessionService:tickAll()
 				self:requestSave(userId, false)
 			end
 		else
-			print("[EconCity] Lỗi khi tick người chơi " .. tostring(userId) .. ": " .. tostring(result))
+			print("[EconCity] Error ticking player " .. tostring(userId) .. ": " .. tostring(result))
 		end
 	end
 	return results
@@ -5159,7 +5159,7 @@ function World.build()
 
 	local ok, err = pcall(cityscape, folder)
 	if not ok then
-		warn("[EconCity] Không dựng được khung cảnh đô thị: " .. tostring(err))
+		warn("[EconCity] Couldn't build the city backdrop: " .. tostring(err))
 		part({ Name = "Ground", Size = Vector3.new(1000, 2, 1000), Position = Vector3.new(0, -1, 0), Material = M.Asphalt, Color = ASPHALT, Parent = folder })
 	end
 
@@ -5314,7 +5314,7 @@ local function send(self, action, payload, okText)
 	task.spawn(function()
 		local response = self.deps.request(action, payload)
 		if not response.ok then
-			self.deps.toast(response.error or "Không thực hiện được", "error")
+			self.deps.toast(response.error or "Couldn't do that", "error")
 		elseif okText then
 			self.deps.toast(okText(response.data or {}))
 		end
@@ -5327,14 +5327,14 @@ function BuildController:apply(index)
 		self.deps.inspect(index)
 	elseif tool == "demolish" then
 		send(self, "demolish", { index = index }, function(data)
-			return "Đã phá dỡ, hoàn " .. Util.formatMoneyFull(data.refund or 0)
+			return "Demolished, refunded " .. Util.formatMoneyFull(data.refund or 0)
 		end)
 	elseif tool == "road" then
 		send(self, "buildRoad", { path = { index } })
 	else
 		local unconnected = self:preview(index) == "warn"
 		send(self, "build", { kind = tool, index = index }, unconnected and function()
-			return "Chưa nối đường về CỔNG nên công trình này chưa hoạt động. Hãy kéo đường tới nó."
+			return "Not connected to the GATE, so this building isn't working yet. Drag a road to it."
 		end or nil)
 	end
 end
@@ -5899,7 +5899,7 @@ function CityRenderer:_buildStatic()
 	text.Font = Enum.Font.BuilderSansExtraBold
 	text.TextSize = 13
 	text.Size = UDim2.fromScale(1, 1)
-	text.Text = "CỔNG"
+	text.Text = "GATE"
 	text.Parent = billboard
 	local tagCorner = Instance.new("UICorner")
 	tagCorner.CornerRadius = UDim.new(1, 0)
@@ -6651,7 +6651,7 @@ BUILDERS.apartment = function(v)
 	end
 	box(out, "entrance", 3.4, 2.4, 0.12, -1.5, 0, az + ad / 2 + 0.1, GLASS_DARK, GLASSMAT, { noShadow = true })
 	box(out, "canopy", 4.4, 0.3, 2, -1.5, 2.55, az + ad / 2 + 1, accent, PLASTIC)
-	box(out, "nameSign", 7, 1.4, 0.3, ax, h + 0.8, az + ad / 2 - 0.4, accent, PLASTIC, { label = "CHUNG CƯ", labelColor = WHITE, labelFace = "Back", noShadow = true })
+	box(out, "nameSign", 7, 1.4, 0.3, ax, h + 0.8, az + ad / 2 - 0.4, accent, PLASTIC, { label = "APARTMENTS", labelColor = WHITE, labelFace = "Back", noShadow = true })
 	cyl(out, "tank", 2.4, 2, 6, h + 0.8, -10.4, STEEL, METAL)
 	box(out, "liftRoom", 2.8, 2.2, 2.8, -9, h + 0.8, -10, wall, CONCRETE)
 	for k = 0, 2 do
@@ -6752,7 +6752,7 @@ BUILDERS.cafe = function(v)
 	panel(out, "window", 1, bw, bd, bx, bz, -1.4, 0.65, 4.3, 2.2, GLASS, GLASSMAT, 0.06, 0.1, { reflectance = 0.25 })
 	door(out, "door", 1, bw, bd, bx, bz, 2.6, GLASS_DARK, 1.2, 2.3)
 	awning(out, "awning", bw, bx, 2.75, bz + bd / 2, red, 5)
-	sign(out, "sign", "CÀ PHÊ", 1, bw, bd, bx, bz, 0, 3.7, 5, 0.7, rgb(250, 240, 220), land("shop", 1, 0.3))
+	sign(out, "sign", "CAFE", 1, bw, bd, bx, bz, 0, 3.7, 5, 0.7, rgb(250, 240, 220), land("shop", 1, 0.3))
 	windowsAll(out, "winSide", bw, bd, bx, bz, 0.2, 1, { 0, 2, 2, 1 }, { wh = 1.6 })
 	cyl(out, "flue", 0.5, 1.6, bx - 2.6, 5.2, bz - 1.6, STEEL, METAL)
 	-- sàn gỗ ngoài trời
@@ -6788,7 +6788,7 @@ BUILDERS.supermarket = function(v)
 	for k = -2, 2 do
 		panel(out, "frontMullion" .. k, 1, sw, sd, sx, sz, -4 + k * 2, 0.5, 0.18, 3.6, DARK, METAL, 0.12, 0.12)
 	end
-	sign(out, "sign", "SIÊU THỊ", 1, sw, sd, sx, sz, 4.5, 4.4, 9, 2.4, WHITE, red, 0.15)
+	sign(out, "sign", "SUPERMARKET", 1, sw, sd, sx, sz, 4.5, 4.4, 9, 2.4, WHITE, red, 0.15)
 	box(out, "canopy", 12, 0.35, 3, -4, 4.4, 1.15, red, PLASTIC)
 	for k, px in ipairs({ -9.5, 1.5 }) do
 		cyl(out, "canopyPost" .. k, 0.35, 4.4, px, 0, 2.3, WHITE, METAL)
@@ -6847,7 +6847,7 @@ BUILDERS.factory = function(v)
 	box(out, "office", ow, 6, od, ox, 0, oz, rgb(246, 246, 244), PLASTER)
 	windowsAll(out, "officeWin", ow, od, ox, oz, 0, 2, { 1, 2, 0, 0 }, { ww = 1.4, wh = 1.3, frame = purple })
 	box(out, "officeRoof", ow + 0.3, 0.4, od + 0.3, ox, 6, oz, purple, PLASTIC)
-	box(out, "officeSign", 3.2, 0.9, 0.25, ox, 6.4, oz + od / 2 - 0.2, purple, PLASTIC, { label = "NHÀ MÁY", labelColor = WHITE, labelFace = "Back", noShadow = true })
+	box(out, "officeSign", 3.2, 0.9, 0.25, ox, 6.4, oz + od / 2 - 0.2, purple, PLASTIC, { label = "FACTORY", labelColor = WHITE, labelFace = "Back", noShadow = true })
 	-- ống khói
 	cyl(out, "chimney", 2, 15, 4.4, 0, -4.6, rgb(200, 196, 190), BRICK)
 	cyl(out, "chimneyBandA", 2.15, 0.9, 4.4, 10.5, -4.6, purple, PLASTIC)
@@ -6880,7 +6880,7 @@ BUILDERS.workshop = function(v)
 	panel(out, "doorFrame", 1, hw, hd, hx, hz, -1.6, 0, 3.4, 3.2, DARK, METAL, 0, 0.1)
 	panel(out, "rollDoor", 1, hw, hd, hx, hz, -1.6, 0, 3, 2.9, STEEL, METAL, 0.06, 0.1)
 	door(out, "sideDoor", 1, hw, hd, hx, hz, 2.4, rgb(90, 96, 110), 1.1, 2.2)
-	sign(out, "sign", "XƯỞNG", 1, hw, hd, hx, hz, 2.4, 2.7, 2.6, 0.8, purple, WHITE)
+	sign(out, "sign", "WORKSHOP", 1, hw, hd, hx, hz, 2.4, 2.7, 2.6, 0.8, purple, WHITE)
 	windowsAll(out, "win", hw, hd, hx, hz, 0.6, 1, { 0, 2, 2, 2 }, { wh = 1.2, frame = purple })
 	cyl(out, "chimney", 1.2, 7.5, 4.6, 0, -4.8, rgb(200, 196, 190), BRICK)
 	cyl(out, "chimneyTop", 1.4, 0.5, 4.6, 7.5, -4.8, DARK, METAL, { effect = "smoke" })
@@ -6914,7 +6914,7 @@ BUILDERS.plant = function(v)
 	box(out, "office", ow, 9, od, ox, 0, oz, rgb(246, 246, 244), PLASTER)
 	ribbons(out, "officeWin", ow, od, ox, oz, 0, 3, 1.6, GLASS)
 	box(out, "officeRoof", ow + 0.3, 0.5, od + 0.3, ox, 9, oz, purple, PLASTIC)
-	box(out, "officeSign", 5.4, 1.2, 0.3, ox, 9.5, oz + od / 2 - 0.3, purple, PLASTIC, { label = "NHÀ MÁY", labelColor = WHITE, labelFace = "Back", noShadow = true })
+	box(out, "officeSign", 5.4, 1.2, 0.3, ox, 9.5, oz + od / 2 - 0.3, purple, PLASTIC, { label = "FACTORY", labelColor = WHITE, labelFace = "Back", noShadow = true })
 	door(out, "officeDoor", 1, ow, od, ox, oz, 0, GLASS_DARK, 1.8, 2.3)
 	-- ống khói
 	for k, p in ipairs({ { 8.4, -10.4, 22 }, { 11.6, -9, 18 } }) do
@@ -6971,7 +6971,7 @@ BUILDERS.office = function(v)
 	bush(out, "roofBushB", tx + 1.4, tz + 1.2, 0.9, top + 2.6)
 	cyl(out, "antenna", 0.3, 5, tx + 2, top + 2.6, tz - 2, WHITE, METAL, { noShadow = true })
 	ball(out, "beacon", 0.6, tx + 2, top + 7.4, tz - 2, rgb(255, 80, 80), M.Neon, { noShadow = true })
-	box(out, "sign", 5, 0.9, 0.25, px, 4.2, pz + pd / 2 - 0.35, blue, PLASTIC, { label = "VĂN PHÒNG", labelColor = WHITE, labelFace = "Back", noShadow = true })
+	box(out, "sign", 5, 0.9, 0.25, px, 4.2, pz + pd / 2 - 0.35, blue, PLASTIC, { label = "OFFICE", labelColor = WHITE, labelFace = "Back", noShadow = true })
 	box(out, "canopy", 3.6, 0.25, 1.8, px, 3, pz + pd / 2 + 0.9, blue, PLASTIC)
 	cyl(out, "revolvingDoor", 1.7, 2.5, px, 0, pz + pd / 2 + 0.2, rgb(150, 200, 226), GLASSMAT, { transparency = 0.2, reflectance = 0.3 })
 	planter(out, "planterA", -5.2, 4.7, 1.4, 0.1)
@@ -7003,7 +7003,7 @@ BUILDERS.office_small = function(v)
 		end,
 	})
 	door(out, "door", 1, bw, bd, bx, bz, 0, GLASS_DARK, 1.6, 2.3)
-	box(out, "canopy", 3.6, 0.6, 1.8, bx, 2.5, bz + bd / 2 + 0.9, blue, PLASTIC, { label = "VĂN PHÒNG", labelColor = WHITE, labelFace = "Back" })
+	box(out, "canopy", 3.6, 0.6, 1.8, bx, 2.5, bz + bd / 2 + 0.9, blue, PLASTIC, { label = "OFFICE", labelColor = WHITE, labelFace = "Back" })
 	box(out, "stripe", 0.9, h + 0.6, 0.9, bx + bw / 2, 0, bz + bd / 2, blue, PLASTIC)
 	box(out, "cornice", bw + 0.4, 0.6, bd + 0.4, bx, h, bz, rgb(70, 74, 82), CONCRETE)
 	solar(out, "solarA", bx - 1.8, h + 0.6, bz - 1, 3, 1.8)
@@ -7087,7 +7087,7 @@ BUILDERS.hospital = function(v)
 	ribbons(out, "win", mw, md, mx, mz, 0, 4, 1.4, rgb(176, 214, 236))
 	box(out, "stripe", 1.6, h, 0.3, mx - mw / 2 + 0.8, 0, front + 0.15, accent, PLASTIC, { noShadow = true })
 	box(out, "parapet", mw + 0.3, 0.8, md + 0.3, mx, h, mz, accent, PLASTIC)
-	box(out, "sign", 7, 1.2, 0.3, 0.6, h + 0.8, front - 0.3, accent, PLASTIC, { label = "BỆNH VIỆN", labelColor = WHITE, labelFace = "Back", noShadow = true })
+	box(out, "sign", 7, 1.2, 0.3, 0.6, h + 0.8, front - 0.3, accent, PLASTIC, { label = "HOSPITAL", labelColor = WHITE, labelFace = "Back", noShadow = true })
 	-- chữ thập trên mặt tiền
 	box(out, "crossBoard", 3, 3, 0.25, 3.8, 6.6, front + 0.25, WHITE, PLASTIC, { noShadow = true })
 	box(out, "crossV", 0.9, 2.4, 0.2, 3.8, 6.9, front + 0.45, accent, PLASTIC, { noShadow = true })
@@ -7102,7 +7102,7 @@ BUILDERS.hospital = function(v)
 	acUnit(out, "acA", 3.6, h + 0.8, -4.4)
 	acUnit(out, "acB", 3.6, h + 0.8, -2.2)
 	-- lối vào cấp cứu
-	box(out, "canopy", 5, 0.6, 2.8, -2.4, 3, front + 1.4, accent, PLASTIC, { label = "CẤP CỨU", labelColor = WHITE, labelFace = "Back" })
+	box(out, "canopy", 5, 0.6, 2.8, -2.4, 3, front + 1.4, accent, PLASTIC, { label = "EMERGENCY", labelColor = WHITE, labelFace = "Back" })
 	for k, px in ipairs({ -4.6, -0.2 }) do
 		cyl(out, "canopyPost" .. k, 0.3, 3, px, 0, front + 2.5, WHITE, METAL)
 	end
@@ -7142,7 +7142,7 @@ BUILDERS.clinic = function(v)
 	box(out, "crossV", 0.8, 2.6, 0.4, bx, h + 0.6, bz + bd / 2 - 0.6, accent, PLASTIC)
 	box(out, "crossH", 2.6, 0.8, 0.4, bx, h + 1.5, bz + bd / 2 - 0.6, accent, PLASTIC)
 	door(out, "door", 1, bw, bd, bx, bz, 0, GLASS_DARK, 1.6, 2.3)
-	box(out, "canopy", 3.8, 0.6, 1.6, bx, 2.55, bz + bd / 2 + 0.8, accent, PLASTIC, { label = "TRẠM Y TẾ", labelColor = WHITE, labelFace = "Back" })
+	box(out, "canopy", 3.8, 0.6, 1.6, bx, 2.55, bz + bd / 2 + 0.8, accent, PLASTIC, { label = "CLINIC", labelColor = WHITE, labelFace = "Back" })
 	box(out, "step", 2, 0.3, 0.8, bx, 0.1, bz + bd / 2 + 0.4, STONE, CONCRETE)
 	add(out, spec("ramp", "Wedge", 1.2, 0.4, 2.6, bx + 2.1, 0.1, bz + bd / 2 + 1.3, STONE, CONCRETE, { rot = 180 }))
 	bench(out, "bench", 3.8, 4.6, true, 0.1)
@@ -7177,7 +7177,7 @@ BUILDERS.school = function(v)
 		end,
 	})
 	door(out, "door", 1, bw, bd, bx, bz, 0, WOOD, 1.8, 2.5)
-	box(out, "porch", 3.6, 0.6, 1.8, bx, 3, front + 0.9, orange, PLASTIC, { label = "TRƯỜNG HỌC", labelColor = WHITE, labelFace = "Back" })
+	box(out, "porch", 3.6, 0.6, 1.8, bx, 3, front + 0.9, orange, PLASTIC, { label = "SCHOOL", labelColor = WHITE, labelFace = "Back" })
 	for k, px in ipairs({ -1.5, 1.5 }) do
 		cyl(out, "column" .. k, 0.4, 3, px, 0, front + 1.5, WHITE, CONCRETE)
 	end
@@ -7229,7 +7229,7 @@ BUILDERS.school_big = function(v)
 	})
 	windowsAll(out, "winMainBack", mw, md, mx, mz, 0.4, 3, { 0, 2, 6, 2 }, { wh = 1.6, floorH = fh, frame = false, glass = rgb(200, 222, 240) })
 	door(out, "door", 1, mw, md, mx, mz, 4.8, WOOD, 2.2, 2.6)
-	box(out, "porch", 4.6, 0.7, 2, 4.8, 3.1, front + 1, orange, PLASTIC, { label = "TRƯỜNG HỌC", labelColor = WHITE, labelFace = "Back" })
+	box(out, "porch", 4.6, 0.7, 2, 4.8, 3.1, front + 1, orange, PLASTIC, { label = "SCHOOL", labelColor = WHITE, labelFace = "Back" })
 	for k, px in ipairs({ 3, 6.6 }) do
 		cyl(out, "column" .. k, 0.4, 3.1, px, 0, front + 1.7, WHITE, CONCRETE)
 	end
@@ -7704,7 +7704,7 @@ local function rescale()
 	for _, fn in ipairs(layoutListeners) do
 		local ok, err = pcall(fn, layout)
 		if not ok then
-			warn("[EconCity] Lỗi bố cục: " .. tostring(err))
+			warn("[EconCity] Layout error: " .. tostring(err))
 		end
 	end
 end
@@ -7731,7 +7731,7 @@ end
 local function requestOrToast(action, payload)
 	local response = request(action, payload)
 	if not response.ok then
-		toasts.show(response.error or "Không thực hiện được", "error")
+		toasts.show(response.error or "Couldn't do that", "error")
 	end
 	return response
 end
@@ -7747,7 +7747,7 @@ end
 local function startNewGame()
 	local response = requestOrToast("newGame")
 	if response.ok then
-		toasts.show("Ván mới: xây nhà, chỗ làm, dịch vụ rồi bấm BẮT ĐẦU.", "good")
+		toasts.show("New game: build homes, jobs and services, then press START.", "good")
 	end
 end
 
@@ -7757,7 +7757,7 @@ local hud = Hud.new(gui, {
 		local starting = s ~= nil and s.status == "PAUSED" and s.month == 0
 		local response = requestOrToast("togglePause")
 		if response.ok and starting then
-			approvalStamp.show("Thành phố mở cửa!", string.format("Bắt đầu nhiệm kỳ %d tháng", s.maxMonths or 24))
+			approvalStamp.show("City is open!", string.format("Your %d-month term begins", s.maxMonths or 24))
 		end
 	end,
 	onNewGame = startNewGame,
@@ -7800,10 +7800,10 @@ buildPanel = BuildPanel.new(gui, {
 		local built = response.data and response.data.built or 0
 		if built > 0 then
 			local s = State.session()
-			local hint = (s and s.month == 0) and " Bấm BẮT ĐẦU để xem thành phố chạy." or " Vài tháng sau bấm lại để bot xây tiếp."
-			toasts.show(string.format("Bot đã xây %d công trình: đường nối cổng, nhà, chỗ làm, dịch vụ.%s", built, hint), "good")
+			local hint = (s and s.month == 0) and " Press START to watch the city run." or " Press again in a few months to build more."
+			toasts.show(string.format("Buildings added by the bot: %d (roads to the gate, homes, jobs, services).%s", built, hint), "good")
 		else
-			toasts.show("Bot chưa xây thêm được: không đủ tiền (bot giữ lại 2 tháng bảo trì) hoặc hết chỗ.")
+			toasts.show("Bot couldn't build more: not enough money (it keeps 2 months of upkeep) or no space left.")
 		end
 	end,
 })
@@ -7823,7 +7823,7 @@ detail = Overlays.detailPanel(gui, {
 		task.spawn(function()
 			local response = requestOrToast("demolish", { index = index })
 			if response.ok then
-				toasts.show("Đã phá dỡ, hoàn " .. Util.formatMoneyFull(response.data and response.data.refund or 0))
+				toasts.show("Demolished, refunded " .. Util.formatMoneyFull(response.data and response.data.refund or 0))
 			end
 		end)
 	end,
@@ -7890,14 +7890,14 @@ local zoomOut = C.button({ Name = "ZoomOut", Text = "−", Font = Theme.FontDisp
 	camera:zoomBy(2)
 end)
 local walkButton
-walkButton = C.button({ Name = "Walk", Text = "Đi dạo", TextSize = 12, Variant = "white", Size = UDim2.fromOffset(104, 40), Radius = 20, LayoutOrder = 3, Parent = camBox }, function()
+walkButton = C.button({ Name = "Walk", Text = "Walk", TextSize = 12, Variant = "white", Size = UDim2.fromOffset(104, 40), Radius = 20, LayoutOrder = 3, Parent = camBox }, function()
 	local mode = camera:toggleMode()
 	cameraMode = mode
 	applyControlMode()
-	walkButton.Text = mode == "overview" and "Đi dạo" or "Toàn cảnh"
+	walkButton.Text = mode == "overview" and "Walk" or "Overview"
 	zoomIn.Visible = mode == "overview"
 	zoomOut.Visible = mode == "overview"
-	toasts.show(mode == "overview" and "Chế độ toàn cảnh" or "Chế độ đi dạo: dùng WASD hoặc cần điều khiển để đi. Muốn xây thì chọn mẫu rồi bấm vào ô.")
+	toasts.show(mode == "overview" and "Overview mode" or "Walk mode: move with WASD or a controller. To build, pick a building and click a tile.")
 end)
 
 -- không cho nút camera đè bảng Xây dựng, thanh chỉ số, joystick, nút nhảy
@@ -8040,7 +8040,7 @@ task.spawn(function()
 		task.wait(1)
 	end
 	if not State.snapshot then
-		toasts.show("Không kết nối được máy chủ trò chơi. Hãy thử vào lại.", "error")
+		toasts.show("Couldn't reach the game server. Please rejoin.", "error")
 	end
 end)
 
@@ -8093,7 +8093,7 @@ builder = BuildController.new({
 	isGamepad = C.isGamepadMode,
 })
 
-print("[EconCity] Client sẵn sàng: " .. Theme.StatusText.ACTIVE)
+print("[EconCity] Client ready: " .. Theme.StatusText.ACTIVE)
 ]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000001A"><Properties><string name="Name">State</string><ProtectedString name="Source"><![CDATA[-- snapshot state phía client, và hàm gọi server
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8135,7 +8135,7 @@ function State.set(snapshot)
 	for _, fn in ipairs(listeners) do
 		local ok, err = pcall(fn, snapshot, State.previous)
 		if not ok then
-			warn("[EconCity] Lỗi cập nhật giao diện: " .. tostring(err))
+			warn("[EconCity] UI update error: " .. tostring(err))
 		end
 	end
 end
@@ -8158,9 +8158,9 @@ function State.request(action, payload, timeout)
 			return requestFunction:InvokeServer(action, payload)
 		end)
 		if not ok then
-			result = { ok = false, error = "Mất kết nối tới máy chủ" }
+			result = { ok = false, error = "Lost connection to the server" }
 		elseif type(response) ~= "table" then
-			result = { ok = false, error = "Máy chủ không phản hồi" }
+			result = { ok = false, error = "The server isn't responding" }
 		else
 			result = response
 		end
@@ -8172,7 +8172,7 @@ function State.request(action, payload, timeout)
 		waited = waited + 0.1
 	end
 	if not done then
-		return { ok = false, error = "Máy chủ phản hồi quá lâu, hãy thử lại" }
+		return { ok = false, error = "The server took too long, please try again" }
 	end
 	return result
 end
@@ -8214,13 +8214,13 @@ end
 -- số liệu chính, hiện cuối dòng mẫu
 local function keyStat(def)
 	if def.cap then
-		return string.format("%d chỗ ở", def.cap)
+		return string.format("%d homes", def.cap)
 	elseif def.rev then
-		return string.format("%d việc × %s", def.jobs, Util.formatMoneyFull(def.rev))
+		return string.format("%d jobs × %s", def.jobs, Util.formatMoneyFull(def.rev))
 	elseif def.pts then
-		return string.format("+%d dịch vụ", def.pts)
+		return string.format("+%d service pts", def.pts)
 	end
-	return "kéo từ CỔNG"
+	return "drag from GATE"
 end
 
 -- công trình 2x2 thì chia thành 4 ô nhỏ
@@ -8242,7 +8242,7 @@ local function swatch(parent, id, size)
 		C.new("Frame", { Name = "Split", BackgroundColor3 = Colors.panel, BorderSizePixel = 0, Size = UDim2.new(0, 2, 1, 0), Position = UDim2.new(0.5, -1, 0, 0), Parent = frame })
 		C.new("Frame", { Name = "Split", BackgroundColor3 = Colors.panel, BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 2), Position = UDim2.new(0, 0, 0.5, -1), Parent = frame })
 	end
-	C.label({ Name = "Code", Text = def and def.code or "PD", Font = Theme.FontDisplay, TextSize = 13, Color = def and Theme.landInk(id) or Colors.text, XAlign = Enum.TextXAlignment.Center, Size = UDim2.fromScale(1, 1), ZIndex = 2, Parent = frame })
+	C.label({ Name = "Code", Text = def and def.code or "DEL", Font = Theme.FontDisplay, TextSize = 13, Color = def and Theme.landInk(id) or Colors.text, XAlign = Enum.TextXAlignment.Center, Size = UDim2.fromScale(1, 1), ZIndex = 2, Parent = frame })
 	return frame
 end
 
@@ -8271,7 +8271,7 @@ function BuildPanel.new(gui, ctx)
 	-- header: tiêu đề + pill tool đang chọn
 	local header = C.new("Frame", { Name = "Header", BackgroundTransparency = 1, Size = UDim2.new(1, -32, 0, 34), Position = UDim2.fromOffset(16, 12), Parent = panel })
 	Icons.badge("grid", { Size = 30, IconSize = 15, Color = Colors.accent, Soft = Colors.accentSoft, Square = true, Position = UDim2.new(0, 0, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5), Parent = header })
-	C.label({ Name = "PanelTitle", Text = "Xây dựng", Font = Theme.FontDisplay, TextSize = 18, Size = UDim2.new(0, 120, 1, 0), Position = UDim2.fromOffset(40, 0), Parent = header })
+	C.label({ Name = "PanelTitle", Text = "Build", Font = Theme.FontDisplay, TextSize = 18, Size = UDim2.new(0, 120, 1, 0), Position = UDim2.fromOffset(40, 0), Parent = header })
 	local toolLabel = C.pill({ Name = "ToolLabel", Text = "", TextSize = 11, Color = Colors.accentSoft, TextColor = Colors.accent, Height = 24, Position = UDim2.new(1, 0, 0.5, 0), AnchorPoint = Vector2.new(1, 0.5), Parent = header })
 	toolLabel.Visible = false
 
@@ -8296,7 +8296,7 @@ function BuildPanel.new(gui, ctx)
 	-- chỉ hiện trong Studio: bot xây thành phố mẫu theo đúng luật, để xem game chạy ra sao
 	local demoButton = C.button({
 		Name = "DemoBuild",
-		Text = "Bot xây mẫu (Studio)",
+		Text = "Demo build bot (Studio)",
 		Variant = "violet",
 		TextSize = 12,
 		Size = UDim2.new(1, 0, 0, 36),
@@ -8344,7 +8344,7 @@ function BuildPanel.new(gui, ctx)
 		C.stroke(Colors.text, 2.5, 1).Parent = chip
 		chipButtons[cat] = chip
 	end
-	chipButtons.demolish = C.button({ Name = "Tool_demolish", Text = "PD", Font = Theme.FontDisplay, TextSize = 13, Variant = "white", Size = UDim2.fromOffset(32, CHIP_H), Radius = 10, LayoutOrder = count, Parent = chips }, function()
+	chipButtons.demolish = C.button({ Name = "Tool_demolish", Text = "DEL", Font = Theme.FontDisplay, TextSize = 13, Variant = "white", Size = UDim2.fromOffset(32, CHIP_H), Radius = 10, LayoutOrder = count, Parent = chips }, function()
 		onChip("demolish")
 	end)
 	local zoneLabel = C.label({ Name = "Zone", Text = "", Font = Theme.FontBold, TextSize = 12, Color = Colors.textDim, Size = UDim2.new(1, 0, 0, 16), LayoutOrder = 2, Parent = content })
@@ -8380,9 +8380,9 @@ function BuildPanel.new(gui, ctx)
 	for k = 0, 3 do
 		C.new("Frame", { BackgroundColor3 = Colors.text, BackgroundTransparency = 0.55, BorderSizePixel = 0, Size = UDim2.new(1, 0, 0, 2), Position = UDim2.fromOffset(0, 4 + k * 5), Parent = hatchSwatch })
 	end
-	C.label({ Text = "Gạch sọc + dấu ! đỏ: chưa nối đường về CỔNG", TextSize = 12, Color = Colors.textDim, Size = UDim2.new(1, -44, 1, 0), Position = UDim2.fromOffset(42, 0), Parent = hatchRow })
+	C.label({ Text = "Stripes + red !: not connected to the GATE", TextSize = 12, Color = Colors.textDim, Size = UDim2.new(1, -44, 1, 0), Position = UDim2.fromOffset(42, 0), Parent = hatchRow })
 	C.label({
-		Text = "Chọn loại đất và mẫu rồi bấm vào ô (mẫu 2x2 thì ô bấm là góc trên bên trái). Bấm i để xem số liệu. Đường: giữ chuột và kéo từ CỔNG.",
+		Text = "Pick a zone and a building, then click a tile (for 2x2, the tile you click is the top-left corner). Press i for details. Roads: hold the mouse and drag from the GATE.",
 		TextSize = 12,
 		Color = Colors.textMuted,
 		Wrapped = true,
@@ -8397,7 +8397,7 @@ function BuildPanel.new(gui, ctx)
 	C.padding(12, 14).Parent = taxCard
 	C.list(Enum.FillDirection.Vertical, 6).Parent = taxCard
 	local taxBlock = C.new("Frame", { Name = "Tax", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 92), LayoutOrder = 1, Parent = taxCard })
-	C.label({ Text = "Thuế", Font = Theme.FontDisplay, TextSize = 15, Size = UDim2.new(0.6, 0, 0, 26), Parent = taxBlock })
+	C.label({ Text = "Tax", Font = Theme.FontDisplay, TextSize = 15, Size = UDim2.new(0.6, 0, 0, 26), Parent = taxBlock })
 	local taxValue = C.pill({ Name = "TaxValue", Text = "", Font = Theme.FontDisplay, TextSize = 15, Color = Colors.panel, TextColor = Colors.accent, Height = 26, Position = UDim2.new(1, 0, 0, 0), AnchorPoint = Vector2.new(1, 0), Parent = taxBlock })
 	local pendingTax = nil
 	local taxToken = 0
@@ -8429,8 +8429,8 @@ function BuildPanel.new(gui, ctx)
 	})
 	slider.frame.Position = UDim2.fromOffset(0, 32)
 	slider.frame.Parent = taxBlock
-	C.label({ Text = "Thấp: dân vui hơn", Font = Theme.FontMedium, TextSize = 11, Color = Colors.good, Size = UDim2.new(0.5, 0, 0, 14), Position = UDim2.fromOffset(0, 76), Parent = taxBlock })
-	C.label({ Text = "Cao: dân bỏ đi", Font = Theme.FontMedium, TextSize = 11, Color = Colors.bad, XAlign = Enum.TextXAlignment.Right, Size = UDim2.new(0.5, 0, 0, 14), Position = UDim2.new(0.5, 0, 0, 76), Parent = taxBlock })
+	C.label({ Text = "Low: happier residents", Font = Theme.FontMedium, TextSize = 11, Color = Colors.good, Size = UDim2.new(0.5, 0, 0, 14), Position = UDim2.fromOffset(0, 76), Parent = taxBlock })
+	C.label({ Text = "High: people leave", Font = Theme.FontMedium, TextSize = 11, Color = Colors.bad, XAlign = Enum.TextXAlignment.Right, Size = UDim2.new(0.5, 0, 0, 14), Position = UDim2.new(0.5, 0, 0, 76), Parent = taxBlock })
 
 	local money = C.label({ Name = "Money", Text = "", Font = Theme.FontMedium, TextSize = 12, Color = Colors.textDim, Wrapped = true, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 2, Parent = taxCard })
 
@@ -8438,7 +8438,7 @@ function BuildPanel.new(gui, ctx)
 	local why = C.well({ Name = "Why", Size = inner, AutomaticSize = Enum.AutomaticSize.Y, Radius = 16, LayoutOrder = 10, Parent = content })
 	C.padding(12, 14).Parent = why
 	C.list(Enum.FillDirection.Vertical, 0).Parent = why
-	local head = sectionHeader(why, "Bảng tính hạnh phúc", 0)
+	local head = sectionHeader(why, "How happiness is calculated", 0)
 	head:FindFirstChild("Heading").Name = "WhyTitle"
 	local whyValue = C.pill({ Name = "WhyValue", Text = "", Font = Theme.FontDisplay, TextSize = 15, Color = Colors.panel, TextColor = Colors.good, Height = 26, Position = UDim2.new(1, 0, 0, 0), AnchorPoint = Vector2.new(1, 0), Parent = head })
 	C.new("Frame", { Name = "Gap", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 6), LayoutOrder = 1, Parent = why })
@@ -8478,7 +8478,7 @@ function BuildPanel.new(gui, ctx)
 			local short = session ~= nil and session.budget < price
 			-- thiếu tiền: hiện số còn thiếu, làm nhạt tên, ô màu đất giữ nguyên
 			local priceLabel = row:FindFirstChild("Price")
-			priceLabel.Text = short and ("thiếu " .. Util.formatMoneyFull(price - session.budget)) or Util.formatMoneyFull(price)
+			priceLabel.Text = short and ("short " .. Util.formatMoneyFull(price - session.budget)) or Util.formatMoneyFull(price)
 			priceLabel.TextColor3 = short and Colors.bad or Colors.warn
 			row:FindFirstChild("Title").TextColor3 = short and Colors.textMuted or Colors.text
 			local selected = obj.tool == id
@@ -8498,14 +8498,14 @@ function BuildPanel.new(gui, ctx)
 			C.setEnabled(chip, not finished)
 		end
 		local info = Config.CATEGORIES[obj.category]
-		zoneLabel.Text = string.format("%s - %s, %d mẫu", info.code, info.zone, #Config.VARIANTS[obj.category])
+		zoneLabel.Text = string.format("%s - %s, %d types", info.code, info.zone, #Config.VARIANTS[obj.category])
 		local def = obj.tool and Config.BUILDINGS[obj.tool]
 		if obj.tool == "demolish" then
-			toolLabel.Text = "Đang chọn: Phá dỡ"
+			toolLabel.Text = "Selected: Demolish"
 			toolLabel.BackgroundColor3 = soft(Colors.danger)
 			toolLabel.TextColor3 = Colors.bad
 		elseif def then
-			toolLabel.Text = "Đang chọn: " .. def.label
+			toolLabel.Text = "Selected: " .. def.label
 			toolLabel.BackgroundColor3 = Colors.accentSoft
 			toolLabel.TextColor3 = Colors.accent
 		else
@@ -8543,27 +8543,27 @@ function BuildPanel.new(gui, ctx)
 
 		local d = CityEngine.compute(s, s.population)
 		-- số ròng đã có ở thẻ thành phố, ở đây tách thu thuế và bảo trì ra để thấy thuế tác động ra sao
-		money.Text = string.format("Mỗi tháng: thu thuế %s, bảo trì %s", Util.formatMoneyFull(d.taxIn), Util.formatMoneyFull(d.M))
+		money.Text = string.format("Each month: tax %s, upkeep %s", Util.formatMoneyFull(d.taxIn), Util.formatMoneyFull(d.M))
 
 		local F = Config.FORMULA
 		local A = CityEngine.attraction(s.happiness)
 		local target = CityEngine.targetPop(d.C, d.J, s.happiness)
 		whyValue.Text = tostring(Util.round(d.H))
 		whyValue.TextColor3 = Theme.happinessColor(d.H)
-		setRow(1, "Việc làm", string.format("%s × %d", fmt(F.happinessEmploymentWeight, 2), Util.round(d.E)), fmt(d.parts.E, 1))
-		setRow(2, "Thuế", string.format("%s × (100 - 2×%d)", fmt(F.happinessTaxWeight, 2), s.tax), fmt(d.parts.T, 1))
-		setRow(3, "Dịch vụ", string.format("%s × %d", fmt(F.happinessServiceWeight, 2), Util.round(d.S)), fmt(d.parts.S, 1))
+		setRow(1, "Employment", string.format("%s × %d", fmt(F.happinessEmploymentWeight, 2), Util.round(d.E)), fmt(d.parts.E, 1))
+		setRow(2, "Tax", string.format("%s × (100 - 2×%d)", fmt(F.happinessTaxWeight, 2), s.tax), fmt(d.parts.T, 1))
+		setRow(3, "Services", string.format("%s × %d", fmt(F.happinessServiceWeight, 2), Util.round(d.S)), fmt(d.parts.S, 1))
 		if d.parts.event ~= 0 then
-			setRow(4, "Sự kiện", "", fmt(d.parts.event, 0))
+			setRow(4, "Event", "", fmt(d.parts.event, 0))
 		else
 			setRow(4, nil)
 		end
-		setRow(5, "Muốn đến", string.format("%s × %s việc", fmt(A, 2), Util.formatInt(d.J)), Util.formatInt(target))
+		setRow(5, "Moving in", string.format("%s × %s jobs", fmt(A, 2), Util.formatInt(d.J)), Util.formatInt(target))
 		-- bị chặn bởi số chỗ ở thì ghi rõ, không thì phép nhân ở trên nhìn như tính sai
 		if target < math.floor(d.J * A) then
-			capNote.Text = string.format("Không quá số chỗ ở (%s). Tính theo hạnh phúc tháng trước: %d.", Util.formatInt(d.C), Util.round(s.happiness))
+			capNote.Text = string.format("Capped at the number of homes (%s). Based on last month's happiness: %d.", Util.formatInt(d.C), Util.round(s.happiness))
 		else
-			capNote.Text = string.format("Tính theo hạnh phúc tháng trước (%d), dưới 50 thì không ai đến.", Util.round(s.happiness))
+			capNote.Text = string.format("Based on last month's happiness (%d). Below 50, nobody moves in.", Util.round(s.happiness))
 		end
 	end
 
@@ -8744,13 +8744,13 @@ function ClassPanel.new(gui, ctx)
 			end
 			return response
 		end
-		ctx.toast(response.error or "Không thực hiện được", "error")
+		ctx.toast(response.error or "Couldn't do that", "error")
 		return nil
 	end
 
 	-- load async, nếu trong lúc chờ màn đã vẽ lại thì bỏ kết quả
 	local function load(parent, action, payload, onData)
-		local loading = note(parent, 0, "Đang tải...")
+		local loading = note(parent, 0, "Loading...")
 		task.spawn(function()
 			local response = ctx.request(action, payload)
 			if not loading.Parent then
@@ -8758,7 +8758,7 @@ function ClassPanel.new(gui, ctx)
 			end
 			loading:Destroy()
 			if not response.ok then
-				note(parent, 1, response.error or "Không tải được", Colors.bad)
+				note(parent, 1, response.error or "Couldn't load", Colors.bad)
 				return
 			end
 			onData(response.data)
@@ -8770,46 +8770,46 @@ function ClassPanel.new(gui, ctx)
 		local snap = ctx.getSnapshot()
 		local isTeacher = snap and snap.isTeacher
 		local isOwner = snap and snap.isOwner
-		modal.setTitle("Lớp học")
+		modal.setTitle("Classes")
 		local body = modal.body
 
-		sectionTitle(body, 1, "Tham gia lớp")
+		sectionTitle(body, 1, "Join a class")
 		local joinRow = C.row({ Size = UDim2.new(1, 0, 0, 40), LayoutOrder = 2, ZIndex = Z, Parent = body })
-		local codeBox = C.textbox({ Placeholder = "Nhập mã mời (VD: QZ7K2M)", Size = UDim2.fromOffset(240, 38), ZIndex = Z, LayoutOrder = 1, Parent = joinRow })
-		C.button({ Text = "Tham gia", Variant = "primary", Size = UDim2.fromOffset(110, 38), ZIndex = Z, LayoutOrder = 2, Parent = joinRow }, function()
+		local codeBox = C.textbox({ Placeholder = "Enter invite code (e.g. QZ7K2M)", Size = UDim2.fromOffset(240, 38), ZIndex = Z, LayoutOrder = 1, Parent = joinRow })
+		C.button({ Text = "Join", Variant = "primary", Size = UDim2.fromOffset(110, 38), ZIndex = Z, LayoutOrder = 2, Parent = joinRow }, function()
 			local code = codeBox.Text
 			if #code:gsub("%s", "") < 3 then
-				ctx.toast("Mã lớp cần ít nhất 3 ký tự", "error")
+				ctx.toast("Class codes have at least 3 characters", "error")
 				return
 			end
 			local response = run("joinClass", { code = code })
 			if response then
-				ctx.toast("Đã tham gia lớp " .. (response.data and response.data.name or code), "good")
+				ctx.toast("Joined class " .. (response.data and response.data.name or code), "good")
 				render()
 			end
 		end)
 
-		sectionTitle(body, 3, "Lớp của tôi")
+		sectionTitle(body, 3, "My classes")
 		local myList = listFrame(body, 4)
 		load(myList, "getMyClasses", nil, function(classes)
 			if #classes == 0 then
-				note(myList, 1, "Bạn chưa tham gia lớp nào.")
+				note(myList, 1, "You haven't joined a class yet.")
 				return
 			end
 			for i, cls in ipairs(classes) do
 				local c = card(myList, i)
-				C.label({ Text = string.format("%s  •  Mã %s", cls.name, cls.code), Font = Theme.FontBold, TextSize = 14, Truncate = true, LayoutOrder = 1, ZIndex = Z, Parent = c })
-				note(c, 2, "Giáo viên: " .. tostring(cls.teacherName or "?"))
+				C.label({ Text = string.format("%s  •  Code %s", cls.name, cls.code), Font = Theme.FontBold, TextSize = 14, Truncate = true, LayoutOrder = 1, ZIndex = Z, Parent = c })
+				note(c, 2, "Teacher: " .. tostring(cls.teacherName or "?"))
 				local actions = C.row({ Size = UDim2.new(1, 0, 0, 36), LayoutOrder = 3, ZIndex = Z, Parent = c })
 				if cls.inRoom then
-					note(c, 4, "Bạn đang ở trong phòng học riêng của lớp này.", Colors.good)
+					note(c, 4, "You're in this class's private classroom.", Colors.good)
 				elseif cls.roomOpen then
-					btn(actions, 1, "Vào phòng học", 130, function()
-						run("enterClassRoom", { code = cls.code }, "Đang chuyển vào phòng học...")
+					btn(actions, 1, "Join classroom", 130, function()
+						run("enterClassRoom", { code = cls.code }, "Moving to the classroom...")
 					end, true)
 				end
-				btn(actions, 2, "Rời lớp", 90, function()
-					if run("leaveClass", { code = cls.code }, "Đã rời lớp " .. cls.name) then
+				btn(actions, 2, "Leave class", 90, function()
+					if run("leaveClass", { code = cls.code }, "Left class " .. cls.name) then
 						render()
 					end
 				end)
@@ -8817,53 +8817,53 @@ function ClassPanel.new(gui, ctx)
 		end)
 
 		if not isTeacher then
-			note(body, 9, "Chỉ giáo viên mới tạo được lớp. Nhờ chủ game thêm bạn vào danh sách giáo viên (mục Quản trị).", Colors.textMuted)
+			note(body, 9, "Only teachers can create classes. Ask the game owner to add you to the teacher list (Admin section).", Colors.textMuted)
 			return
 		end
 
-		sectionTitle(body, 10, "Lớp tôi dạy")
+		sectionTitle(body, 10, "Classes I teach")
 		local createRow = C.row({ Size = UDim2.new(1, 0, 0, 40), LayoutOrder = 11, ZIndex = Z, Parent = body })
-		local nameBox = C.textbox({ Placeholder = "Tên lớp mới (VD: 10A1)", Size = UDim2.fromOffset(240, 38), ZIndex = Z, LayoutOrder = 1, Parent = createRow })
-		C.button({ Text = "Tạo lớp mới", Variant = "primary", Size = UDim2.fromOffset(120, 38), ZIndex = Z, LayoutOrder = 2, Parent = createRow }, function()
+		local nameBox = C.textbox({ Placeholder = "New class name (e.g. Period 3)", Size = UDim2.fromOffset(240, 38), ZIndex = Z, LayoutOrder = 1, Parent = createRow })
+		C.button({ Text = "Create class", Variant = "primary", Size = UDim2.fromOffset(120, 38), ZIndex = Z, LayoutOrder = 2, Parent = createRow }, function()
 			local name = nameBox.Text
 			if #name:gsub("%s", "") == 0 then
-				ctx.toast("Hãy nhập tên lớp", "error")
+				ctx.toast("Enter a class name", "error")
 				return
 			end
 			local response = run("createClass", { name = name })
 			if response then
 				local d = response.data
-				ctx.toast(string.format("Đã tạo lớp %s. Mã mời: %s", d.name, d.code), "good")
+				ctx.toast(string.format("Created class %s. Invite code: %s", d.name, d.code), "good")
 				if d.renamed then
-					ctx.toast("Chưa kiểm duyệt được tên lớp nên tạm dùng tên \"" .. d.name .. "\"", "error")
+					ctx.toast("Couldn't check the class name, using the temporary name \"" .. d.name .. "\"", "error")
 				end
 				go("roster", { code = d.code, lastResult = nil, scenarioList = nil })
 			end
 		end)
-		note(body, 12, "Tên lớp hiển thị cho học sinh và được lọc theo quy định của Roblox. Không dùng họ tên thật hoặc tên trường. Mỗi phút tạo được 1 lớp.", Colors.textMuted)
+		note(body, 12, "Students see the class name, and Roblox filters it. Don't use real names or school names. You can create 1 class per minute.", Colors.textMuted)
 
 		local teachList = listFrame(body, 13)
 		load(teachList, "getTeacherClasses", nil, function(classes)
 			if #classes == 0 then
-				note(teachList, 1, "Chưa có lớp nào. Tạo lớp để nhận mã mời 6 ký tự cho học sinh.")
+				note(teachList, 1, "No classes yet. Create one to get a 6-character invite code for students.")
 				return
 			end
 			for i, cls in ipairs(classes) do
 				local c = card(teachList, i)
-				C.label({ Text = string.format("%s  •  MÃ MỜI: %s", cls.name, cls.code), Font = Theme.FontBold, TextSize = 14, Truncate = true, LayoutOrder = 1, ZIndex = Z, Parent = c })
-				note(c, 2, string.format("%d học sinh%s", cls.memberCount or 0, cls.roomOpen and " • Phòng học riêng đang mở" or ""))
-				btn(c, 3, "Xem tiến độ & gán kịch bản  ›", 240, function()
+				C.label({ Text = string.format("%s  •  INVITE CODE: %s", cls.name, cls.code), Font = Theme.FontBold, TextSize = 14, Truncate = true, LayoutOrder = 1, ZIndex = Z, Parent = c })
+				note(c, 2, string.format("Students: %d%s", cls.memberCount or 0, cls.roomOpen and " • Private classroom open" or ""))
+				btn(c, 3, "Progress & scenarios  ›", 240, function()
 					go("roster", { code = cls.code, lastResult = nil, scenarioList = nil })
 				end)
 			end
 		end)
 
 		local extra = C.row({ Size = UDim2.new(1, 0, 0, 36), LayoutOrder = 20, ZIndex = Z, Parent = body })
-		btn(extra, 1, "Kịch bản tuỳ chỉnh", 180, function()
+		btn(extra, 1, "Custom scenarios", 180, function()
 			go("scenarios")
 		end)
 		if isOwner then
-			btn(extra, 2, "Quản trị", 120, function()
+			btn(extra, 2, "Admin", 120, function()
 				go("admin")
 			end)
 		end
@@ -8895,21 +8895,21 @@ function ClassPanel.new(gui, ctx)
 	-- Trang tiến độ lớp (giáo viên) ------------------------------------------------------------
 	local function renderRoster()
 		local body = modal.body
-		modal.setTitle("Lớp " .. tostring(view.code))
+		modal.setTitle("Class " .. tostring(view.code))
 		local top = C.row({ Size = UDim2.new(1, 0, 0, 36), LayoutOrder = 1, ZIndex = Z, Parent = body })
-		btn(top, 1, "‹ Quay lại", 96, function()
+		btn(top, 1, "‹ Back", 96, function()
 			go("home")
 		end)
-		btn(top, 2, "Tải lại", 76, function()
+		btn(top, 2, "Reload", 76, function()
 			view.scenarioList = nil
 			render()
 		end)
-		btn(top, 3, "Xuất CSV", 90, function()
+		btn(top, 3, "Export CSV", 90, function()
 			go("csv")
 		end)
 		local roomRow = C.row({ Size = UDim2.new(1, 0, 0, 36), LayoutOrder = 2, ZIndex = Z, Parent = body })
 
-		sectionTitle(body, 3, "Gán sự kiện khủng hoảng cho cả lớp")
+		sectionTitle(body, 3, "Assign a crisis event to the whole class")
 		local pickerHolder = listFrame(body, 4)
 		local function drawPicker()
 			for _, child in ipairs(pickerHolder:GetChildren()) do
@@ -8928,7 +8928,7 @@ function ClassPanel.new(gui, ctx)
 				drawPicker()
 			end)
 			C.label({
-				Text = string.format("%s%s (mức %d/10, %d tháng)  %d/%d", "", current.name .. (current.custom and " (tự tạo)" or ""), current.severity or 5, current.durationMonths or 1, view.scenarioIndex, #choices),
+				Text = string.format("%s%s (level %d/10, months: %d)  %d/%d", "", current.name .. (current.custom and " (custom)" or ""), current.severity or 5, current.durationMonths or 1, view.scenarioIndex, #choices),
 				Font = Theme.FontBold,
 				TextSize = 13,
 				Truncate = true,
@@ -8942,20 +8942,20 @@ function ClassPanel.new(gui, ctx)
 				view.scenarioIndex = view.scenarioIndex % #choices + 1
 				drawPicker()
 			end)
-			local desc = current.description ~= "" and current.description or "(không có mô tả)"
+			local desc = current.description ~= "" and current.description or "(no description)"
 			if current.custom then
-				desc = desc .. "\nHiệu ứng: " .. effectsText(current.effects)
+				desc = desc .. "\nEffects: " .. effectsText(current.effects)
 			end
 			note(pickerHolder, 2, desc)
-			btn(pickerHolder, 3, "Gán cho lớp", 140, function()
+			btn(pickerHolder, 3, "Assign to class", 140, function()
 				local response = run("assignScenario", { code = view.code, scenarioId = current.id })
 				if response then
 					local d = response.data
 					view.lastResult = string.format(
-						"Đã gán \"%s\". Áp dụng ngay cho %d học sinh đang chơi trong server này%s. Học sinh vắng mặt sẽ nhận sự kiện khi vào game (trong vòng 7 ngày).",
+						"Assigned \"%s\". Students on this server who got it: %d%s. Offline students get it next time they join (within 7 days).",
 						d.name or current.name,
 						d.appliedHere or 0,
-						d.broadcast and "; đã gửi tới học sinh ở các server khác" or ""
+						d.broadcast and "; sent to students on other servers" or ""
 					)
 					render()
 				end
@@ -8975,9 +8975,9 @@ function ClassPanel.new(gui, ctx)
 			end)
 		end
 
-		sectionTitle(body, 7, "Tiến độ học sinh (bấm vào tên để xem chi tiết)")
+		sectionTitle(body, 7, "Student progress (click a name for details)")
 		local header = C.new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 20), LayoutOrder = 8, ZIndex = Z, Parent = body })
-		local columns = { { "HỌC SINH", 0, 0.34 }, { "TIẾN ĐỘ", 0.34, 0.16 }, { "DOANH THU", 0.5, 0.16 }, { "HẠNH PHÚC", 0.66, 0.16 }, { "TRẠNG THÁI", 0.82, 0.18 } }
+		local columns = { { "STUDENT", 0, 0.34 }, { "PROGRESS", 0.34, 0.16 }, { "REVENUE", 0.5, 0.16 }, { "HAPPINESS", 0.66, 0.16 }, { "STATUS", 0.82, 0.18 } }
 		for _, col in ipairs(columns) do
 			C.label({ Text = col[1], TextSize = 10, Font = Theme.FontBold, Color = Colors.textMuted, Size = UDim2.new(col[3], 0, 1, 0), Position = UDim2.fromScale(col[2], 0), ZIndex = Z, Parent = header })
 		end
@@ -8987,27 +8987,27 @@ function ClassPanel.new(gui, ctx)
 			-- nút phòng riêng tuỳ phòng đang mở hay đóng
 			if data.roomOpen then
 				if data.inRoom then
-					note(roomRow, 1, "Bạn đang ở phòng học riêng của lớp này.", Colors.good).Size = UDim2.fromOffset(300, 30)
+					note(roomRow, 1, "You're in this class's private classroom.", Colors.good).Size = UDim2.fromOffset(300, 30)
 				else
-					btn(roomRow, 1, "Vào phòng học riêng", 170, function()
-						run("enterClassRoom", { code = view.code }, "Đang chuyển vào phòng học...")
+					btn(roomRow, 1, "Join private classroom", 170, function()
+						run("enterClassRoom", { code = view.code }, "Moving to the classroom...")
 					end, true)
 				end
-				btn(roomRow, 2, "Đóng phòng", 110, function()
-					if run("closeClassRoom", { code = view.code }, "Đã đóng phòng học riêng") then
+				btn(roomRow, 2, "Close classroom", 110, function()
+					if run("closeClassRoom", { code = view.code }, "Private classroom closed") then
 						render()
 					end
 				end)
 			else
-				btn(roomRow, 1, "Mở phòng học riêng", 170, function()
-					if run("openClassRoom", { code = view.code }, "Đã mở phòng học riêng. Học sinh bấm \"Vào phòng học\" để vào") then
+				btn(roomRow, 1, "Open private classroom", 170, function()
+					if run("openClassRoom", { code = view.code }, "Private classroom open. Students press \"Join classroom\" to enter") then
 						render()
 					end
 				end)
 			end
 			local members = data.members or {}
 			if #members == 0 then
-				note(list, 1, "Chưa có học sinh nào tham gia lớp này. Gửi mã mời " .. tostring(view.code) .. " cho học sinh.")
+				note(list, 1, "No students have joined yet. Send the invite code " .. tostring(view.code) .. " to your students.")
 			end
 			for i, m in ipairs(members) do
 				local r = C.new("TextButton", {
@@ -9027,14 +9027,14 @@ function ClassPanel.new(gui, ctx)
 					go("student", { studentId = m.userId })
 				end)
 				local s = m.summary
-				local statusText, statusColor = "Chưa chơi", Colors.textMuted
+				local statusText, statusColor = "Not played", Colors.textMuted
 				if s then
 					statusText = Theme.StatusText[s.status] or s.status
 					statusColor = Theme.statusColor(s.status)
 				end
 				local cells = {
-					{ tostring(m.name) .. (m.online and " (đang chơi)" or ""), 0, 0.34, m.online and Colors.good or Colors.text },
-					{ s and string.format("Tháng %d/%d", s.month or 0, s.maxMonths or 12) or "Chưa bắt đầu", 0.34, 0.16, Colors.text },
+					{ tostring(m.name) .. (m.online and " (playing)" or ""), 0, 0.34, m.online and Colors.good or Colors.text },
+					{ s and string.format("Month %d/%d", s.month or 0, s.maxMonths or 12) or "Not started", 0.34, 0.16, Colors.text },
 					{ s and Util.formatMoneyK(s.gdp or 0) or "$0k", 0.5, 0.16, Colors.text },
 					{ s and tostring(Util.round(s.happiness or 0)) or "-", 0.66, 0.16, s and Theme.happinessColor(s.happiness or 0) or Colors.text },
 					{ statusText, 0.82, 0.18, statusColor },
@@ -9043,10 +9043,10 @@ function ClassPanel.new(gui, ctx)
 					C.label({ Text = cell[1], TextSize = 12, Color = cell[4], Truncate = true, Size = UDim2.new(cell[3], -6, 1, 0), Position = UDim2.new(cell[2], 6, 0, 0), ZIndex = Z, Parent = r })
 				end
 			end
-			note(list, 900, "Tên màu xanh: đang trong game. Còn lại: số liệu lần lưu gần nhất.", Colors.textMuted)
+			note(list, 900, "Green names are in the game now. Others show their last saved data.", Colors.textMuted)
 			local log = data.scenarioLog or {}
 			if #log > 0 then
-				sectionTitle(logHolder, 1, "Sự kiện đã gán gần đây")
+				sectionTitle(logHolder, 1, "Recently assigned events")
 				for i, e in ipairs(log) do
 					note(logHolder, 1 + i, "• " .. tostring(e.name), Colors.textDim)
 				end
@@ -9057,21 +9057,21 @@ function ClassPanel.new(gui, ctx)
 	-- Chi tiết một học sinh ------------------------------------------------------------------
 	local function renderStudent()
 		local body = modal.body
-		modal.setTitle("Chi tiết học sinh")
+		modal.setTitle("Student details")
 		local top = C.row({ Size = UDim2.new(1, 0, 0, 36), LayoutOrder = 1, ZIndex = Z, Parent = body })
-		btn(top, 1, "‹ Lớp " .. tostring(view.code), 130, function()
+		btn(top, 1, "‹ Class " .. tostring(view.code), 130, function()
 			go("roster")
 		end)
 		local holder = listFrame(body, 2, 6)
 		load(holder, "getStudentDetail", { code = view.code, userId = view.studentId }, function(data)
-			sectionTitle(holder, 1, string.format("%s (%s)", tostring(data.name), data.online and "đang chơi" or "không online"))
+			sectionTitle(holder, 1, string.format("%s (%s)", tostring(data.name), data.online and "playing" or "offline"))
 			local d = data.detail
 			if type(d) ~= "table" then
-				note(holder, 2, "Học sinh này chưa có dữ liệu ván chơi.")
+				note(holder, 2, "This student has no game data yet.")
 				return
 			end
 			note(holder, 2, string.format(
-				"%s • Tháng %d/%d • Ngân sách %s • Doanh thu %s/tháng • Hạnh phúc %d • Việc làm %s • Dân số %s • Thuế %s • Điểm %s",
+				"%s • Month %d/%d • Budget %s • Revenue %s/month • Happiness %d • Employment %s • Population %s • Tax %s • Score %s",
 				Theme.StatusText[d.status] or tostring(d.status),
 				d.month or 0,
 				d.maxMonths or 24,
@@ -9085,7 +9085,7 @@ function ClassPanel.new(gui, ctx)
 			), Colors.text)
 			if type(d.city) == "table" and type(d.city.counts) == "table" then
 				local g = card(holder, 3)
-				C.label({ Text = "Công trình", Font = Theme.FontBold, TextSize = 13, LayoutOrder = 0, ZIndex = Z, Parent = g })
+				C.label({ Text = "Buildings", Font = Theme.FontBold, TextSize = 13, LayoutOrder = 0, ZIndex = Z, Parent = g })
 				local parts = {}
 				for _, kind in ipairs(Config.BUILDING_ORDER) do
 					local n = d.city.counts[kind]
@@ -9093,21 +9093,21 @@ function ClassPanel.new(gui, ctx)
 						table.insert(parts, string.format("%s %s: %d", Config.CATEGORIES[kind].code, Config.CATEGORIES[kind].zone, n))
 					end
 				end
-				note(g, 1, #parts > 0 and table.concat(parts, " • ") or "Chưa xây gì.")
+				note(g, 1, #parts > 0 and table.concat(parts, " • ") or "Nothing built yet.")
 				if (d.city.unconnected or 0) > 0 then
-					note(g, 2, string.format("%d công trình chưa nối đường (không hoạt động, vẫn tốn bảo trì)", d.city.unconnected), Colors.warn)
+					note(g, 2, string.format("Buildings not connected by road: %d (not working, still paying upkeep)", d.city.unconnected), Colors.warn)
 				end
 			end
 			if type(d.scenarios) == "table" and #d.scenarios > 0 then
 				local names = {}
 				for _, sc in ipairs(d.scenarios) do
-					table.insert(names, string.format("%s (còn %d tháng)", tostring(sc.name), sc.monthsLeft or 0))
+					table.insert(names, string.format("%s (months left: %d)", tostring(sc.name), sc.monthsLeft or 0))
 				end
-				note(holder, 5, "Sự kiện đang chạy: " .. table.concat(names, ", "), Colors.warn)
+				note(holder, 5, "Active events: " .. table.concat(names, ", "), Colors.warn)
 			end
 			if type(d.history) == "table" and #d.history > 0 then
 				local h = card(holder, 6)
-				C.label({ Text = "Từng tháng (tháng • ngân sách • doanh thu • hạnh phúc • việc làm • dân số)", Font = Theme.FontBold, TextSize = 12, Wrapped = true, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 0, ZIndex = Z, Parent = h })
+				C.label({ Text = "By month (month • budget • revenue • happiness • employment • population)", Font = Theme.FontBold, TextSize = 12, Wrapped = true, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 0, ZIndex = Z, Parent = h })
 				for i, row in ipairs(d.history) do
 					note(h, i, string.format("T%d • %s • %s • %d • %s • %s", row.month or i, Util.formatMoneyFull(row.budget or 0),
 						Util.formatMoneyK(row.gdp or 0), Util.round(row.happiness or 0), row.employment and string.format("%d%%", Util.round(row.employment)) or "—", Util.formatInt(row.population or 0)), Colors.text)
@@ -9119,12 +9119,12 @@ function ClassPanel.new(gui, ctx)
 	-- Xuất CSV ---------------------------------------------------------------------------------
 	local function renderCsv()
 		local body = modal.body
-		modal.setTitle("Xuất CSV lớp " .. tostring(view.code))
+		modal.setTitle("Export CSV for class " .. tostring(view.code))
 		local top = C.row({ Size = UDim2.new(1, 0, 0, 36), LayoutOrder = 1, ZIndex = Z, Parent = body })
-		btn(top, 1, "‹ Lớp " .. tostring(view.code), 130, function()
+		btn(top, 1, "‹ Class " .. tostring(view.code), 130, function()
 			go("roster")
 		end)
-		note(body, 2, "Bấm vào ô bên dưới, nhấn Ctrl+A rồi Ctrl+C (Mac: ⌘A, ⌘C) để sao chép, sau đó dán vào Excel hoặc Google Sheets. Mỗi dòng là một học sinh × một tháng của ván gần nhất.")
+		note(body, 2, "Click the box below, press Ctrl+A then Ctrl+C (Mac: ⌘A, ⌘C) to copy, then paste into Excel or Google Sheets. Each row is one student × one month of their latest game.")
 		local holder = listFrame(body, 3, 8)
 		load(holder, "exportClassCsv", { code = view.code }, function(data)
 			local lines = {}
@@ -9145,10 +9145,10 @@ function ClassPanel.new(gui, ctx)
 			if #chunks == 0 then
 				chunks = { header }
 			end
-			note(holder, 1, string.format("%d dòng dữ liệu%s", data.rows or 0, #chunks > 1 and (", chia thành " .. #chunks .. " phần, phần nào cũng có dòng tiêu đề") or ""), Colors.good)
+			note(holder, 1, string.format("Data rows: %d%s", data.rows or 0, #chunks > 1 and (", split into " .. #chunks .. " parts, each with a header row") or ""), Colors.good)
 			for i, chunk in ipairs(chunks) do
 				if #chunks > 1 then
-					note(holder, i * 2, "Phần " .. i .. "/" .. #chunks, Colors.textDim)
+					note(holder, i * 2, "Part " .. i .. "/" .. #chunks, Colors.textDim)
 				end
 				multilineBox(holder, i * 2 + 1, chunk)
 			end
@@ -9158,43 +9158,43 @@ function ClassPanel.new(gui, ctx)
 	-- Kịch bản tuỳ chỉnh ----------------------------------------------------------------------
 	local function renderScenarios()
 		local body = modal.body
-		modal.setTitle("Kịch bản tuỳ chỉnh")
+		modal.setTitle("Custom scenarios")
 		local top = C.row({ Size = UDim2.new(1, 0, 0, 36), LayoutOrder = 1, ZIndex = Z, Parent = body })
-		btn(top, 1, "‹ Quay lại", 96, function()
+		btn(top, 1, "‹ Back", 96, function()
 			go("home")
 		end)
 
-		sectionTitle(body, 2, "Kịch bản của tôi")
+		sectionTitle(body, 2, "My scenarios")
 		local list = listFrame(body, 3)
 		load(list, "listScenarios", nil, function(data)
 			view.scenarioList = data.custom or {}
 			if #data.custom == 0 then
-				note(list, 1, "Chưa có kịch bản tuỳ chỉnh nào.")
+				note(list, 1, "No custom scenarios yet.")
 			end
 			for i, s in ipairs(data.custom) do
 				local c = card(list, i)
-				C.label({ Text = string.format("%s (tự tạo, mức %d/10, %d tháng)", s.name, s.severity, s.durationMonths), Font = Theme.FontBold, TextSize = 13, Truncate = true, LayoutOrder = 1, ZIndex = Z, Parent = c })
+				C.label({ Text = string.format("%s (custom, level %d/10, months: %d)", s.name, s.severity, s.durationMonths), Font = Theme.FontBold, TextSize = 13, Truncate = true, LayoutOrder = 1, ZIndex = Z, Parent = c })
 				if s.description and s.description ~= "" then
 					note(c, 2, s.description)
 				end
 				note(c, 3, effectsText(s.effects), Colors.warn)
-				btn(c, 4, "Xoá", 70, function()
-					if run("deleteScenario", { id = s.id }, "Đã xoá kịch bản") then
+				btn(c, 4, "Delete", 70, function()
+					if run("deleteScenario", { id = s.id }, "Scenario deleted") then
 						view.scenarioList = nil
 						render()
 					end
 				end)
 			end
-			note(list, 99, string.format("Tối đa %d kịch bản. Kịch bản xuất hiện trong mục \"Gán sự kiện\" của mọi lớp bạn dạy (ghi \"tự tạo\").", data.max or Config.MAX_CUSTOM_SCENARIOS), Colors.textMuted)
+			note(list, 99, string.format("Up to %d scenarios. They appear under \"Assign\" in every class you teach (marked \"custom\").", data.max or Config.MAX_CUSTOM_SCENARIOS), Colors.textMuted)
 		end)
 
-		sectionTitle(body, 4, "Tạo kịch bản mới")
+		sectionTitle(body, 4, "New scenario")
 		local form = card(body, 5)
-		local nameBox = C.textbox({ Placeholder = "Tên kịch bản (VD: Bão lớn miền Trung)", Size = UDim2.new(1, 0, 0, 34), ZIndex = Z, LayoutOrder = 1, Parent = form })
-		local descBox = C.textbox({ Placeholder = "Mô tả ngắn cho học sinh (tuỳ chọn)", Size = UDim2.new(1, 0, 0, 34), ZIndex = Z, LayoutOrder = 2, Parent = form })
-		local getSeverity = numberStepper(form, 3, "Mức độ nghiêm trọng (1-10)", { min = 1, max = 10, step = 1, value = 5, default = 5, format = tostring })
-		local getDuration = numberStepper(form, 4, "Thời gian (tháng)", { min = 1, max = 12, step = 1, value = 3, default = 3, format = function(v)
-			return v .. " tháng"
+		local nameBox = C.textbox({ Placeholder = "Scenario name (e.g. Big storm)", Size = UDim2.new(1, 0, 0, 34), ZIndex = Z, LayoutOrder = 1, Parent = form })
+		local descBox = C.textbox({ Placeholder = "Short description for students (optional)", Size = UDim2.new(1, 0, 0, 34), ZIndex = Z, LayoutOrder = 2, Parent = form })
+		local getSeverity = numberStepper(form, 3, "Severity (1-10)", { min = 1, max = 10, step = 1, value = 5, default = 5, format = tostring })
+		local getDuration = numberStepper(form, 4, "Duration (months)", { min = 1, max = 12, step = 1, value = 3, default = 3, format = function(v)
+			return v .. " mo"
 		end })
 		local getters = {}
 		for i, field in ipairs(Scenarios.CUSTOM_EFFECTS) do
@@ -9210,8 +9210,8 @@ function ClassPanel.new(gui, ctx)
 				end,
 			})
 		end
-		note(form, 30, "Tên và mô tả được lọc theo quy định của Roblox trước khi học sinh nhìn thấy. Mỗi phút tạo được 1 kịch bản.", Colors.textMuted)
-		btn(form, 31, "Tạo kịch bản", 140, function()
+		note(form, 30, "Roblox filters names and descriptions before students see them. You can create 1 scenario per minute.", Colors.textMuted)
+		btn(form, 31, "Create scenario", 140, function()
 			local effects = {}
 			for key, getter in pairs(getters) do
 				effects[key] = getter()
@@ -9224,7 +9224,7 @@ function ClassPanel.new(gui, ctx)
 				effects = effects,
 			})
 			if response then
-				ctx.toast("Đã tạo kịch bản \"" .. tostring(response.data.name) .. "\"", "good")
+				ctx.toast("Created scenario \"" .. tostring(response.data.name) .. "\"", "good")
 				view.scenarioList = nil
 				render()
 			end
@@ -9234,96 +9234,96 @@ function ClassPanel.new(gui, ctx)
 	-- Quản trị (chủ game) -------------------------------------------------------------------------
 	local function renderAdmin()
 		local body = modal.body
-		modal.setTitle("Quản trị")
+		modal.setTitle("Admin")
 		local top = C.row({ Size = UDim2.new(1, 0, 0, 36), LayoutOrder = 1, ZIndex = Z, Parent = body })
-		btn(top, 1, "‹ Quay lại", 96, function()
+		btn(top, 1, "‹ Back", 96, function()
 			go("home")
 		end)
-		btn(top, 2, "Tải lại", 76, function()
+		btn(top, 2, "Reload", 76, function()
 			render()
 		end)
 		local holder = listFrame(body, 2, 8)
 		load(holder, "adminGetState", nil, function(data)
-			sectionTitle(holder, 1, "Giáo viên")
-			note(holder, 2, "Nhập tên đăng nhập Roblox (không phải tên hiển thị) hoặc UserId. Chủ game và các UserId trong Config luôn là giáo viên.", Colors.textMuted)
+			sectionTitle(holder, 1, "Teachers")
+			note(holder, 2, "Enter a Roblox username (not the display name) or UserId. The game owner and UserIds in Config are always teachers.", Colors.textMuted)
 			local addRow = C.row({ Size = UDim2.new(1, 0, 0, 36), LayoutOrder = 3, ZIndex = Z, Parent = holder })
-			local teacherBox = C.textbox({ Placeholder = "Tên đăng nhập hoặc UserId", Size = UDim2.fromOffset(240, 34), ZIndex = Z, LayoutOrder = 1, Parent = addRow })
-			btn(addRow, 2, "Thêm giáo viên", 140, function()
+			local teacherBox = C.textbox({ Placeholder = "Username or UserId", Size = UDim2.fromOffset(240, 34), ZIndex = Z, LayoutOrder = 1, Parent = addRow })
+			btn(addRow, 2, "Add teacher", 140, function()
 				local response = run("adminAddTeacher", { target = teacherBox.Text })
 				if response then
-					ctx.toast("Đã thêm giáo viên " .. tostring(response.data.name), "good")
+					ctx.toast("Added teacher " .. tostring(response.data.name), "good")
 					render()
 				end
 			end, true)
 			local teachers = listFrame(holder, 4, 4)
 			if #data.teachers == 0 then
-				note(teachers, 1, "Chưa thêm giáo viên nào.")
+				note(teachers, 1, "No teachers added yet.")
 			end
 			for i, t in ipairs(data.teachers) do
 				local r = C.row({ Size = UDim2.new(1, 0, 0, 36), LayoutOrder = i, ZIndex = Z, Parent = teachers })
 				C.label({ Text = string.format("%s (UserId %s)", tostring(t.name), tostring(t.userId)), TextSize = 12, Truncate = true, Size = UDim2.fromOffset(360, 30), LayoutOrder = 1, ZIndex = Z, Parent = r })
-				btn(r, 2, "Bỏ", 60, function()
-					if run("adminRemoveTeacher", { userId = t.userId }, "Đã bỏ quyền giáo viên") then
+				btn(r, 2, "Remove", 60, function()
+					if run("adminRemoveTeacher", { userId = t.userId }, "Teacher access removed") then
 						render()
 					end
 				end)
 			end
 
-			sectionTitle(holder, 10, "Cấm người chơi")
+			sectionTitle(holder, 10, "Ban players")
 			local banForm = C.row({ Size = UDim2.new(1, 0, 0, 36), LayoutOrder = 11, ZIndex = Z, Parent = holder })
-			local banTarget = C.textbox({ Placeholder = "Tên đăng nhập / UserId", Size = UDim2.fromOffset(180, 34), ZIndex = Z, LayoutOrder = 1, Parent = banForm })
-			local banDays = C.textbox({ Placeholder = "Số ngày (0 = vĩnh viễn)", Size = UDim2.fromOffset(170, 34), ZIndex = Z, LayoutOrder = 2, Parent = banForm })
-			local banReason = C.textbox({ Placeholder = "Lý do hiển thị cho người bị cấm", Size = UDim2.new(1, 0, 0, 34), ZIndex = Z, LayoutOrder = 12, Parent = holder })
-			btn(holder, 13, "Cấm", 90, function()
+			local banTarget = C.textbox({ Placeholder = "Username / UserId", Size = UDim2.fromOffset(180, 34), ZIndex = Z, LayoutOrder = 1, Parent = banForm })
+			local banDays = C.textbox({ Placeholder = "Days (0 = permanent)", Size = UDim2.fromOffset(170, 34), ZIndex = Z, LayoutOrder = 2, Parent = banForm })
+			local banReason = C.textbox({ Placeholder = "Reason shown to the banned player", Size = UDim2.new(1, 0, 0, 34), ZIndex = Z, LayoutOrder = 12, Parent = holder })
+			btn(holder, 13, "Ban", 90, function()
 				local response = run("adminBan", { target = banTarget.Text, days = tonumber(banDays.Text) or 0, reason = banReason.Text })
 				if response then
-					ctx.toast("Đã cấm " .. tostring(response.data.name), "good")
+					ctx.toast("Banned " .. tostring(response.data.name), "good")
 					render()
 				end
 			end, true)
 			local bans = listFrame(holder, 14, 4)
 			for i, b in ipairs(data.bans) do
 				local r = C.row({ Size = UDim2.new(1, 0, 0, 36), LayoutOrder = i, ZIndex = Z, Parent = bans })
-				C.label({ Text = string.format("%s • %s • %s", tostring(b.name), (b.days or 0) > 0 and (b.days .. " ngày") or "vĩnh viễn", tostring(b.reason or "")), TextSize = 12, Truncate = true, Size = UDim2.fromOffset(360, 30), LayoutOrder = 1, ZIndex = Z, Parent = r })
-				btn(r, 2, "Bỏ cấm", 80, function()
-					if run("adminUnban", { userId = b.userId }, "Đã bỏ cấm") then
+				C.label({ Text = string.format("%s • %s • %s", tostring(b.name), (b.days or 0) > 0 and (b.days .. " day(s)") or "permanent", tostring(b.reason or "")), TextSize = 12, Truncate = true, Size = UDim2.fromOffset(360, 30), LayoutOrder = 1, ZIndex = Z, Parent = r })
+				btn(r, 2, "Unban", 80, function()
+					if run("adminUnban", { userId = b.userId }, "Unbanned") then
 						render()
 					end
 				end)
 			end
 
 			-- Xoá dữ liệu
-			sectionTitle(holder, 20, "Xoá dữ liệu theo yêu cầu (Right to be Forgotten)")
-			note(holder, 21, "Khi Roblox gửi tin nhắn yêu cầu xoá dữ liệu kèm UserId, nhập UserId đó rồi bấm Xoá hai lần. Thao tác xoá hồ sơ, rút khỏi lớp, xoá lớp người đó dạy, điểm xếp hạng và kịch bản tuỳ chỉnh. Không hoàn tác được.", Colors.textMuted)
+			sectionTitle(holder, 20, "Delete data on request (Right to Erasure)")
+			note(holder, 21, "When Roblox sends a data deletion request with a UserId, enter that UserId and press Delete twice. This deletes the profile, removes them from classes, and deletes the classes they teach, their leaderboard scores and custom scenarios. It can't be undone.", Colors.textMuted)
 			local delRow = C.row({ Size = UDim2.new(1, 0, 0, 36), LayoutOrder = 22, ZIndex = Z, Parent = holder })
 			local delBox = C.textbox({ Placeholder = "UserId", Size = UDim2.fromOffset(180, 34), ZIndex = Z, LayoutOrder = 1, Parent = delRow })
 			local armed = nil
 			local delButton
-			delButton = btn(delRow, 2, "Xoá toàn bộ dữ liệu", 180, function()
+			delButton = btn(delRow, 2, "Delete all data", 180, function()
 				local target = delBox.Text
 				if armed ~= target then
 					armed = target
-					delButton.Text = "Bấm lần nữa để xác nhận"
+					delButton.Text = "Press again to confirm"
 					task.delay(5, function()
 						if delButton.Parent and armed == target then
 							armed = nil
-							delButton.Text = "Xoá toàn bộ dữ liệu"
+							delButton.Text = "Delete all data"
 						end
 					end)
 					return
 				end
 				armed = nil
-				delButton.Text = "Xoá toàn bộ dữ liệu"
+				delButton.Text = "Delete all data"
 				local response = run("adminDeleteUserData", { target = target })
 				if response then
 					local d = response.data
-					ctx.toast(string.format("Đã xoá dữ liệu: hồ sơ %s, rút khỏi %d lớp, xoá %d lớp", d.profile and "có" or "không có", d.classesLeft or 0, d.classesDeleted or 0), "good")
+					ctx.toast(string.format("Data deleted. Profile: %s. Removed from classes: %d. Classes deleted: %d", d.profile and "found" or "not found", d.classesLeft or 0, d.classesDeleted or 0), "good")
 					render()
 				end
 			end)
 
 			if #data.log > 0 then
-				sectionTitle(holder, 30, "Nhật ký gần đây")
+				sectionTitle(holder, 30, "Recent log")
 				for i, row in ipairs(data.log) do
 					if i > 10 then
 						break
@@ -9332,7 +9332,7 @@ function ClassPanel.new(gui, ctx)
 				end
 			end
 			if data.persistence == "memory" then
-				note(holder, 50, "Đang ở chế độ thử (chưa bật DataStore): danh sách chỉ lưu tạm trong server này.", Colors.warn)
+				note(holder, 50, "Test mode (DataStore off): lists are only kept on this server.", Colors.warn)
 			end
 		end)
 	end
@@ -9356,7 +9356,7 @@ function ClassPanel.new(gui, ctx)
 		end
 	end
 
-	modal = C.modal({ Name = "ClassModal", Title = "Lớp học", Size = UDim2.fromOffset(640, 560), Parent = gui, onOpen = function()
+	modal = C.modal({ Name = "ClassModal", Title = "Classes", Size = UDim2.fromOffset(640, 560), Parent = gui, onOpen = function()
 		view.mode = "home"
 		render()
 	end })
@@ -10429,7 +10429,7 @@ function Hud.new(gui, ctx)
 		C.corner(2).Parent = bar
 	end
 	C.label({ Name = "Name", Text = "Econ City", Font = Theme.FontDisplay, TextSize = 20, Size = UDim2.fromOffset(LEFT_W - 76, 24), Position = UDim2.fromOffset(70, 11), Parent = stats })
-	obj.month = C.label({ Name = "Month", Text = "Tháng 0 / 24", Font = Theme.FontMedium, TextSize = 12, Color = Colors.textDim, Size = UDim2.fromOffset(LEFT_W - 76, 16), Position = UDim2.fromOffset(70, 35), Parent = stats })
+	obj.month = C.label({ Name = "Month", Text = "Month 0 / 24", Font = Theme.FontMedium, TextSize = 12, Color = Colors.textDim, Size = UDim2.fromOffset(LEFT_W - 76, 16), Position = UDim2.fromOffset(70, 35), Parent = stats })
 	local monthTrack = C.new("Frame", { Name = "MonthBar", BackgroundColor3 = Colors.track, BorderSizePixel = 0, Size = UDim2.fromOffset(LEFT_W - 82, 6), Position = UDim2.fromOffset(70, 56), Parent = stats })
 	C.round().Parent = monthTrack
 	obj.monthFill = C.new("Frame", { Name = "Fill", BackgroundColor3 = Colors.panel, BorderSizePixel = 0, Size = UDim2.fromScale(0, 1), Parent = monthTrack })
@@ -10437,10 +10437,10 @@ function Hud.new(gui, ctx)
 	C.gradient(Colors.accent, Colors.violet, 0).Parent = obj.monthFill
 
 	local specs = {
-		{ name = "Stat_NGÂN SÁCH", title = "Ngân sách", icon = "coin", color = Colors.gold },
-		{ name = "Stat_DÂN SỐ", title = "Dân số", icon = "people", color = Colors.people },
-		{ name = "Stat_VIỆC LÀM", title = "Việc làm", icon = "briefcase", color = Colors.jobs },
-		{ name = "Stat_HẠNH PHÚC", title = "Hạnh phúc", icon = "face", color = Colors.good },
+		{ name = "Stat_BUDGET", title = "Budget", icon = "coin", color = Colors.gold },
+		{ name = "Stat_POPULATION", title = "Population", icon = "people", color = Colors.people },
+		{ name = "Stat_EMPLOYMENT", title = "Employment", icon = "briefcase", color = Colors.jobs },
+		{ name = "Stat_HAPPINESS", title = "Happiness", icon = "face", color = Colors.good },
 	}
 	local x = LEFT_W
 	obj.budget, obj.budgetSub = statTile(stats, x, specs[1])
@@ -10452,7 +10452,7 @@ function Hud.new(gui, ctx)
 	local happyTile
 	obj.happiness, obj.happinessSub, obj.happyIcon, happyTile = statTile(stats, x, specs[4])
 	obj.happyBadge = happyTile:FindFirstChild("Badge")
-	obj.happinessSub.Text = "≥ 50: dân đến"
+	obj.happinessSub.Text = "50+: people move in"
 
 	-- nhãn vai trò giáo viên / cảnh báo lưu dữ liệu, học sinh thường không thấy
 	obj.modeBadge = C.pill({ Name = "ModeBadge", Text = "", TextSize = 11, Color = Colors.goldSoft, TextColor = Colors.warn, Height = 24, Position = UDim2.fromOffset(14, BLOCK_H + 18), Parent = gui })
@@ -10481,13 +10481,13 @@ function Hud.new(gui, ctx)
 	local statusCell = C.well({ Name = "Status", Size = UDim2.fromOffset(118, 44), LayoutOrder = nextOrder(), Parent = bar })
 	obj.statusDot = C.new("Frame", { Name = "Dot", BackgroundColor3 = Colors.good, BorderSizePixel = 0, Size = UDim2.fromOffset(8, 8), Position = UDim2.fromOffset(12, 10), Parent = statusCell })
 	C.round().Parent = obj.statusDot
-	obj.statusText = C.label({ Name = "StatusText", Text = "Đang tải", Font = Theme.FontBold, TextSize = 12, Truncate = true, Size = UDim2.new(1, -32, 0, 18), Position = UDim2.fromOffset(26, 5), Parent = statusCell })
+	obj.statusText = C.label({ Name = "StatusText", Text = "Loading", Font = Theme.FontBold, TextSize = 12, Truncate = true, Size = UDim2.new(1, -32, 0, 18), Position = UDim2.fromOffset(26, 5), Parent = statusCell })
 	obj.countdown = C.label({ Name = "Countdown", Text = "", Font = Theme.FontMedium, TextSize = 11, Color = Colors.textDim, Size = UDim2.new(1, -24, 0, 16), Position = UDim2.fromOffset(12, 23), Parent = statusCell })
 	obj.statusCell = statusCell
 
 	obj.pauseButton = C.button({
 		Name = "Pause",
-		Text = "TẠM DỪNG",
+		Text = "PAUSE",
 		Variant = "success",
 		Font = Theme.FontDisplay,
 		TextSize = 15,
@@ -10517,7 +10517,7 @@ function Hud.new(gui, ctx)
 		pauseIcon = Icons.draw(name, { Size = 18, Color = Colors.onAccent, Position = UDim2.new(0, -12, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5), Parent = obj.pauseButton })
 	end
 
-	obj.tickNowButton = C.button({ Name = "TickNow", Text = "Tick ngay", Variant = "secondary", TextSize = 12, Size = UDim2.fromOffset(98, 44), PadLeft = 22, LayoutOrder = nextOrder(), Parent = bar }, ctx.onTickNow)
+	obj.tickNowButton = C.button({ Name = "TickNow", Text = "Tick now", Variant = "secondary", TextSize = 12, Size = UDim2.fromOffset(98, 44), PadLeft = 22, LayoutOrder = nextOrder(), Parent = bar }, ctx.onTickNow)
 	Icons.draw("forward", { Size = 14, Color = Colors.accent, Position = UDim2.new(0, -8, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5), Parent = obj.tickNowButton })
 	obj.tickNowButton.Visible = false
 
@@ -10530,10 +10530,10 @@ function Hud.new(gui, ctx)
 		navIcons[b] = Icons.draw(icon, { Size = 18, Color = Colors.textDim, Position = UDim2.new(0.5, 0, 0, 4), AnchorPoint = Vector2.new(0.5, 0), Parent = b })
 		return b
 	end
-	obj.historyButton = navButton("History", "Lịch sử", "chart", ctx.onHistory)
-	obj.leaderboardButton = navButton("Leaderboard", "Xếp hạng", "podium", ctx.onLeaderboard)
-	obj.classButton = navButton("Class", "Lớp học", "people", ctx.onClass)
-	obj.panelToggle = navButton("PanelToggle", "Ẩn bảng", "grid", ctx.onTogglePanel)
+	obj.historyButton = navButton("History", "History", "chart", ctx.onHistory)
+	obj.leaderboardButton = navButton("Leaderboard", "Ranking", "podium", ctx.onLeaderboard)
+	obj.classButton = navButton("Class", "Class", "people", ctx.onClass)
+	obj.panelToggle = navButton("PanelToggle", "Hide", "grid", ctx.onTogglePanel)
 
 	local lastMonth = nil
 	function obj.update(snap)
@@ -10543,7 +10543,7 @@ function Hud.new(gui, ctx)
 		end
 		local animate = lastMonth ~= nil and lastMonth ~= s.month
 		lastMonth = s.month
-		obj.month.Text = string.format("Tháng %d / %d", s.month, s.maxMonths)
+		obj.month.Text = string.format("Month %d / %d", s.month, s.maxMonths)
 		local progress = s.maxMonths > 0 and math.clamp(s.month / s.maxMonths, 0, 1) or 0
 		TweenService:Create(obj.monthFill, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.fromScale(progress, 1) }):Play()
 		setValue(obj.budget, Util.formatMoneyFull(s.budget), animate)
@@ -10566,23 +10566,23 @@ function Hud.new(gui, ctx)
 		obj.finished = finished
 		obj.status = s.status
 		obj.notStarted = s.status == "PAUSED" and s.month == 0
-		obj.statusText.Text = obj.notStarted and "Chưa chạy" or (Theme.StatusTitle[s.status] or s.status)
+		obj.statusText.Text = obj.notStarted and "Not started" or (Theme.StatusTitle[s.status] or s.status)
 		obj.statusDot.BackgroundColor3 = obj.notStarted and Colors.textMuted or Theme.statusColor(s.status)
 		obj.renderPauseText()
 		obj.tickNowButton.Visible = snap.isStudio == true and not obj.compact
 		C.setEnabled(obj.tickNowButton, s.status == "ACTIVE")
 
-		local role = (snap.isOwner and "Chủ game") or (snap.isTeacher and "Giáo viên") or nil
+		local role = (snap.isOwner and "Owner") or (snap.isTeacher and "Teacher") or nil
 		local parts = { role }
 		local color, bg = Colors.textDim, Colors.panel
 		if snap.inPrivateRoom then
-			table.insert(parts, "Phòng học riêng")
+			table.insert(parts, "Private classroom")
 		end
 		if snap.saveDisabled then
-			table.insert(parts, "Không lưu được tiến độ, hãy thoát ra rồi vào lại game")
+			table.insert(parts, "Progress can't be saved, please leave and rejoin")
 			color, bg = Colors.bad, soft(Colors.bad)
 		elseif snap.persistence == "memory" then
-			table.insert(parts, "Chế độ thử: dữ liệu chỉ lưu tạm trong server này")
+			table.insert(parts, "Test mode: data is only kept on this server")
 			color, bg = Colors.warn, Colors.goldSoft
 		end
 		obj.modeBadge.Text = table.concat(parts, " | ")
@@ -10593,22 +10593,22 @@ function Hud.new(gui, ctx)
 
 	-- net = thu chi dự kiến mỗi tháng, Main tính bằng CityEngine
 	function obj.setNet(net, capacity, jobs)
-		obj.budgetSub.Text = string.format("%s%s/th", net >= 0 and "+" or "", Util.formatMoneyFull(net))
+		obj.budgetSub.Text = string.format("%s%s/mo", net >= 0 and "+" or "", Util.formatMoneyFull(net))
 		obj.budgetSub.TextColor3 = net >= 0 and Colors.good or Colors.bad
-		obj.populationSub.Text = "/ " .. Util.formatInt(capacity) .. " chỗ ở"
-		obj.employmentSub.Text = Util.formatInt(jobs) .. " chỗ làm"
+		obj.populationSub.Text = "/ " .. Util.formatInt(capacity) .. " homes"
+		obj.employmentSub.Text = Util.formatInt(jobs) .. " jobs"
 	end
 
 	function obj.renderPauseText()
 		local text, variantColor, icon
 		if obj.finished then
-			text, variantColor, icon = "VÁN MỚI", Colors.accent, "play" -- đóng màn hình kết thúc rồi vẫn chơi lại được
+			text, variantColor, icon = "NEW GAME", Colors.accent, "play" -- đóng màn hình kết thúc rồi vẫn chơi lại được
 		elseif obj.notStarted then
-			text, variantColor, icon = "BẮT ĐẦU", Colors.success, "play"
+			text, variantColor, icon = "START", Colors.success, "play"
 		elseif obj.status == "PAUSED" then
-			text, variantColor, icon = "CHẠY TIẾP", Colors.success, "play"
+			text, variantColor, icon = "RESUME", Colors.success, "play"
 		else
-			text, variantColor, icon = "TẠM DỪNG", Colors.amber, "pause"
+			text, variantColor, icon = "PAUSE", Colors.amber, "pause"
 		end
 		obj.pauseButton.Text = text
 		if obj.pauseButton:GetAttribute("BaseColor") ~= variantColor then
@@ -10626,9 +10626,9 @@ function Hud.new(gui, ctx)
 		obj.countdown.Size = compact and UDim2.new(1, -16, 0, 16) or UDim2.new(1, -24, 0, 16)
 		obj.countdown.TextXAlignment = compact and Enum.TextXAlignment.Center or Enum.TextXAlignment.Left
 		obj.statusDot.Visible = not compact
-		obj.leaderboardButton.Text = compact and "Hạng" or "Xếp hạng"
-		obj.classButton.Text = compact and "Lớp" or "Lớp học"
-		obj.panelToggle.Text = compact and "Xây" or (obj.panelVisible and "Ẩn bảng" or "Xây dựng")
+		obj.leaderboardButton.Text = compact and "Rank" or "Ranking"
+		obj.classButton.Text = compact and "Class" or "Class"
+		obj.panelToggle.Text = compact and "Build" or (obj.panelVisible and "Hide" or "Build")
 		for _, sub in ipairs(obj.subs) do
 			sub.Visible = not compact
 		end
@@ -10648,22 +10648,22 @@ function Hud.new(gui, ctx)
 		b.TextColor3 = visible and Colors.accent or Colors.textDim
 		Icons.setColor(navIcons[b], visible and Colors.accent or Colors.textDim)
 		if not obj.compact then
-			b.Text = visible and "Ẩn bảng" or "Xây dựng"
+			b.Text = visible and "Hide" or "Build"
 		end
 	end
 
 	function obj.updateCountdown(snap, serverNow)
 		local s = snap and snap.session
 		if s and (s.status == "ENDED" or s.status == "FAILED") then
-			obj.countdown.Text = "Hết ván"
+			obj.countdown.Text = "Game over"
 			return
 		end
 		if not s or s.status ~= "ACTIVE" then
-			obj.countdown.Text = string.format("%ds / tháng", Config.TICK_SECONDS)
+			obj.countdown.Text = string.format("%ds / month", Config.TICK_SECONDS)
 			return
 		end
 		local remaining = math.max(0, math.ceil((snap.nextTickAt or 0) - serverNow))
-		obj.countdown.Text = string.format("còn %ds", remaining)
+		obj.countdown.Text = string.format("%ds left", remaining)
 	end
 
 	setPauseIcon("play")
@@ -11051,14 +11051,14 @@ function Modals.leaderboard(gui, ctx)
 				C.shadowStroke(1, 0.88).Parent = b
 			end
 		end
-		tab("TabGlobal", "Toàn cầu", "global", 1)
-		tab("TabClass", "Lớp của tôi", "class", 2)
+		tab("TabGlobal", "Global", "global", 1)
+		tab("TabClass", "My class", "class", 2)
 		local codes = classCodes()
 		if scope == "class" and #codes > 1 then
 			if classIndex > #codes then
 				classIndex = 1
 			end
-			C.button({ Text = "Lớp: " .. codes[classIndex] .. "  ›", Variant = "white", Size = UDim2.fromOffset(150, 36), ZIndex = 54, LayoutOrder = 3, Parent = tabRow }, function()
+			C.button({ Text = "Class: " .. codes[classIndex] .. "  ›", Variant = "white", Size = UDim2.fromOffset(150, 36), ZIndex = 54, LayoutOrder = 3, Parent = tabRow }, function()
 				classIndex = classIndex % #codes + 1
 				task.spawn(refresh)
 			end)
@@ -11071,12 +11071,12 @@ function Modals.leaderboard(gui, ctx)
 		local myToken = requestToken -- chỉ hiện kết quả của lần bấm mới nhất, bỏ response cũ về trễ
 		modal.clear()
 		renderHeader()
-		local status = C.label({ Text = "Đang tải...", TextSize = 12, Color = Colors.textMuted, LayoutOrder = 1, ZIndex = 53, Parent = modal.body })
+		local status = C.label({ Text = "Loading...", TextSize = 12, Color = Colors.textMuted, LayoutOrder = 1, ZIndex = 53, Parent = modal.body })
 		local payload = { scope = scope }
 		if scope == "class" then
 			local codes = classCodes()
 			if #codes == 0 then
-				status.Text = "Bạn chưa thuộc lớp nào."
+				status.Text = "You're not in a class yet."
 				return
 			end
 			payload.code = codes[math.min(classIndex, #codes)]
@@ -11088,13 +11088,13 @@ function Modals.leaderboard(gui, ctx)
 			return
 		end
 		if not response.ok then
-			status.Text = response.error or "Không tải được bảng xếp hạng"
+			status.Text = response.error or "Couldn't load the leaderboard"
 			status.TextColor3 = Colors.bad
 			return
 		end
 		local data = response.data or {}
 		local rows = data.rows or {}
-		status.Text = "Điểm = số dân có việc × hạnh phúc / 100 + ngân sách / 100. Mỗi người giữ điểm cao nhất. Bảng cập nhật sau mỗi 2 lượt."
+		status.Text = "Score = employed residents × happiness / 100 + budget / 100. Everyone keeps their best score. The board updates every 2 months."
 		status.TextWrapped = true
 		status.Size = UDim2.new(1, 0, 0, 34)
 		local meShown = false
@@ -11103,16 +11103,16 @@ function Modals.leaderboard(gui, ctx)
 			meShown = meShown or r.isMe
 		end
 		if #rows == 0 then
-			C.label({ Text = "Chưa có dữ liệu xếp hạng.", TextSize = 13, Color = Colors.textDim, LayoutOrder = 5, ZIndex = 53, Parent = modal.body })
+			C.label({ Text = "No rankings yet.", TextSize = 13, Color = Colors.textDim, LayoutOrder = 5, ZIndex = 53, Parent = modal.body })
 		end
 		-- dòng "Bạn" luôn hiện ở cuối, chưa lọt top cũng hiện
 		local me = data.me
 		if me and not meShown then
 			local text
 			if me.ranked == false then
-				text = "Bạn (chơi thử trong Studio, không tính xếp hạng)"
+				text = "You (Studio test play, not ranked)"
 			else
-				text = "Bạn (chưa vào top " .. tostring(#rows > 0 and #rows or 20) .. ")"
+				text = "You (not in the top " .. tostring(#rows > 0 and #rows or 20) .. ")"
 			end
 			local best = math.max(me.bestScore or 0, me.currentScore or 0)
 			local r = C.well({ Color = Colors.accentSoft, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 100, ZIndex = 53, Parent = modal.body })
@@ -11122,7 +11122,7 @@ function Modals.leaderboard(gui, ctx)
 		end
 	end
 
-	modal = C.modal({ Name = "LeaderboardModal", Title = "Bảng xếp hạng", Size = UDim2.fromOffset(560, 500), Parent = gui, onOpen = function()
+	modal = C.modal({ Name = "LeaderboardModal", Title = "Leaderboard", Size = UDim2.fromOffset(560, 500), Parent = gui, onOpen = function()
 		scope = "global" -- mở lại luôn về bảng toàn cầu
 		task.spawn(refresh)
 	end })
@@ -11138,7 +11138,7 @@ local function barChart(parent, order, title, values, formatter, colorFn, months
 	C.label({ Text = title, Font = Theme.FontDisplay, TextSize = 14, Size = UDim2.new(0.5, 0, 0, 22), Position = UDim2.fromOffset(14, 8), ZIndex = 54, Parent = holder })
 	local plot = C.new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, -28, 1, -58), Position = UDim2.fromOffset(14, 36), ZIndex = 54, Parent = holder })
 	if #values == 0 then
-		C.label({ Text = "Chưa có dữ liệu, đợi hết tháng đầu tiên.", TextSize = 12, Color = Colors.textDim, Size = UDim2.fromScale(1, 1), XAlign = Enum.TextXAlignment.Center, ZIndex = 55, Parent = plot })
+		C.label({ Text = "No data yet, wait for the first month to end.", TextSize = 12, Color = Colors.textDim, Size = UDim2.fromScale(1, 1), XAlign = Enum.TextXAlignment.Center, ZIndex = 55, Parent = plot })
 		return
 	end
 	local maxV, minV = 0, 0
@@ -11172,11 +11172,11 @@ local function barChart(parent, order, title, values, formatter, colorFn, months
 			C.stroke(Colors.text, 1.5, 0.75).Parent = bar -- cột mới nhất
 		end
 		if i == 1 or i % labelEvery == 0 then
-			C.label({ Text = "T" .. i, Font = Theme.FontMedium, TextSize = 10, Color = Colors.textMuted, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(slot, 0, 0, 14), Position = UDim2.new(slot * (i - 1), 0, 1, 4), ZIndex = 55, Parent = plot })
+			C.label({ Text = "M" .. i, Font = Theme.FontMedium, TextSize = 10, Color = Colors.textMuted, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(slot, 0, 0, 14), Position = UDim2.new(slot * (i - 1), 0, 1, 4), ZIndex = 55, Parent = plot })
 		end
 	end
 	local summary = C.pill({
-		Text = "Cao nhất " .. formatter(math.max(table.unpack(values))) .. "   |   Mới nhất " .. formatter(values[#values]),
+		Text = "Highest " .. formatter(math.max(table.unpack(values))) .. "   |   Latest " .. formatter(values[#values]),
 		Font = Theme.FontBold,
 		TextSize = 11,
 		Color = Colors.panel,
@@ -11194,19 +11194,19 @@ local function pastGamesList(parent, order, pastSessions)
 	local holder = C.well({ Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Radius = Theme.Radius.lg, LayoutOrder = order, ZIndex = 53, Parent = parent })
 	C.padding(12, 14).Parent = holder
 	C.list(Enum.FillDirection.Vertical, 6).Parent = holder
-	C.label({ Text = "Các ván đã chơi", Font = Theme.FontDisplay, TextSize = 14, LayoutOrder = 0, ZIndex = 54, Parent = holder })
+	C.label({ Text = "Past games", Font = Theme.FontDisplay, TextSize = 14, LayoutOrder = 0, ZIndex = 54, Parent = holder })
 	if #pastSessions == 0 then
-		C.label({ Text = "Chưa có ván nào kết thúc.", TextSize = 12, Color = Colors.textDim, LayoutOrder = 1, ZIndex = 54, Parent = holder })
+		C.label({ Text = "No finished games yet.", TextSize = 12, Color = Colors.textDim, LayoutOrder = 1, ZIndex = 54, Parent = holder })
 		return
 	end
 	for i, p in ipairs(pastSessions) do
 		if i > 10 then
 			break
 		end
-		local statusText = (p.status == "ENDED" and "Thắng") or (p.status == "FAILED" and "Thất bại") or "Bỏ dở"
+		local statusText = (p.status == "ENDED" and "Won") or (p.status == "FAILED" and "Failed") or "Abandoned"
 		local color = (p.status == "ENDED" and Colors.good) or (p.status == "FAILED" and Colors.bad) or Colors.textDim
 		C.label({
-			Text = string.format("%s • tháng %d/%d • ngân sách %s • dân %s • hạnh phúc %d • điểm %s",
+			Text = string.format("%s • month %d/%d • budget %s • population %s • happiness %d • score %s",
 				statusText, p.month or 0, p.maxMonths or 24, Util.formatMoneyFull(p.budget or 0), Util.formatInt(p.population or 0),
 				Util.round(p.happiness or 0), Util.formatInt(p.prosperityScore or 0)),
 			Font = Theme.FontMedium,
@@ -11238,29 +11238,29 @@ function Modals.history(gui, ctx)
 			table.insert(employment, h.employment or 0)
 			table.insert(population, h.population or 0)
 		end
-		barChart(modal.body, 1, "Ngân sách", budgets, Util.formatMoneyFull, function(v)
+		barChart(modal.body, 1, "Budget", budgets, Util.formatMoneyFull, function(v)
 			return v >= 0 and Colors.gold or Colors.bad
 		end, months)
-		barChart(modal.body, 2, "Doanh thu của doanh nghiệp", revenue, Util.formatMoneyK, function()
+		barChart(modal.body, 2, "Business revenue", revenue, Util.formatMoneyK, function()
 			return Colors.jobs
 		end, months)
-		barChart(modal.body, 3, "Hạnh phúc", happiness, function(v)
+		barChart(modal.body, 3, "Happiness", happiness, function(v)
 			return tostring(Util.round(v))
 		end, function(v)
 			return Theme.happinessColor(v)
 		end, months)
-		barChart(modal.body, 4, "Tỉ lệ việc làm", employment, function(v)
+		barChart(modal.body, 4, "Employment rate", employment, function(v)
 			return string.format("%d%%", Util.round(v))
 		end, function(v)
 			return (v < 80 and Colors.amber) or Colors.success
 		end, months)
-		barChart(modal.body, 5, "Dân số", population, function(v)
+		barChart(modal.body, 5, "Population", population, function(v)
 			return Util.formatInt(v)
 		end, function()
 			return Colors.people
 		end, months)
 		C.label({
-			Text = "Thuế thành phố thu = doanh thu × thuế suất. Thuế cao thu được nhiều hơn mỗi đồng doanh thu, nhưng dân kém vui nên ít người đến làm việc. Xem doanh thu, hạnh phúc và dân số cùng lúc để thấy điều đó.",
+			Text = "City tax = revenue × tax rate. A higher rate brings in more from each dollar, but it makes residents unhappy, so fewer people move in to work. Compare revenue, happiness and population to see the trade-off.",
 			TextSize = 12,
 			Color = Colors.textDim,
 			Wrapped = true,
@@ -11273,7 +11273,7 @@ function Modals.history(gui, ctx)
 		pastGamesList(modal.body, 7, (snap and snap.profile and snap.profile.pastSessions) or {})
 		modal.body.CanvasPosition = scroll -- giữ chỗ đang cuộn khi vẽ lại mỗi lượt
 	end
-	modal = C.modal({ Name = "HistoryModal", Title = "Lịch sử thành phố", Size = UDim2.fromOffset(580, 580), Parent = gui, onOpen = render })
+	modal = C.modal({ Name = "HistoryModal", Title = "City history", Size = UDim2.fromOffset(580, 580), Parent = gui, onOpen = render })
 	Icons.badge("chart", { Size = 30, IconSize = 15, Color = Colors.accent, Soft = Colors.accentSoft, Square = true, Position = UDim2.fromOffset(22, 14), ZIndex = 52, Parent = modal.card })
 	modal.card:FindFirstChild("Title").Position = UDim2.fromOffset(62, 0)
 	-- chỉ vẽ lại khi có data mới (tick, ván mới, init), không theo đồng hồ
@@ -11335,10 +11335,10 @@ function Overlays.cityBar(gui)
 
 	local cards = {}
 	local specs = {
-		{ "population", "Muốn đến", "people", Colors.people },
-		{ "jobs", "Chỗ làm có người", "briefcase", Colors.jobs },
-		{ "service", "Dịch vụ", "heart", Colors.mood },
-		{ "goods", "Hàng cho shop", "box", Colors.amber },
+		{ "population", "Moving in", "people", Colors.people },
+		{ "jobs", "Jobs filled", "briefcase", Colors.jobs },
+		{ "service", "Services", "heart", Colors.mood },
+		{ "goods", "Shop goods", "box", Colors.amber },
 	}
 	for i, t in ipairs(specs) do
 		local card = C.panel({ Name = "Card_" .. t[1], Size = UDim2.fromOffset(CELL_W, 62), Radius = Theme.Radius.lg, LayoutOrder = i, Parent = bar })
@@ -11360,16 +11360,16 @@ function Overlays.cityBar(gui)
 		end
 		local d = CityEngine.compute(s, s.population)
 		local target = CityEngine.targetPop(d.C, d.J, s.happiness)
-		cards.population.value.Text = Util.formatInt(target) .. " người"
-		cards.population.sub.Text = "tối đa " .. Util.formatInt(d.C) .. " chỗ ở"
+		cards.population.value.Text = Util.formatInt(target)
+		cards.population.sub.Text = "max " .. Util.formatInt(d.C) .. " homes"
 		-- đếm số chỗ làm có người, không dùng %: đặt cạnh "Việc làm 100%" của dân nhìn như mâu thuẫn
 		cards.jobs.value.Text = Util.formatInt(d.emp) .. " / " .. Util.formatInt(d.J)
-		cards.jobs.sub.Text = "chỗ làm đã có người"
+		cards.jobs.sub.Text = "workers / jobs"
 		cards.service.value.Text = s.population > 0 and tostring(Util.round(d.S)) or "—"
-		cards.service.sub.Text = "phục vụ " .. Util.formatInt(d.pts * Config.FORMULA.residentsPerPoint) .. " người"
+		cards.service.sub.Text = "serves " .. Util.formatInt(d.pts * Config.FORMULA.residentsPerPoint) .. " people"
 		cards.goods.value.Text = d.slots.shop > 0 and string.format("%d%%", Util.round(d.G * 100)) or "—"
 		cards.goods.value.TextColor3 = (d.slots.shop > 0 and d.G < Config.CRISIS.goodsBelow) and Colors.warn or Colors.text
-		cards.goods.sub.Text = string.format("%d chỗ CN / %d chỗ TM", d.slots.factory, d.slots.shop)
+		cards.goods.sub.Text = string.format("%d IND / %d COM jobs", d.slots.factory, d.slots.shop)
 	end
 	return obj
 end
@@ -11393,14 +11393,14 @@ function Overlays.eventsColumn(gui)
 	C.list(Enum.FillDirection.Vertical, 8).Parent = guide
 	local head = C.new("Frame", { Name = "Head", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 0, Parent = guide })
 	Icons.badge("map", { Size = 30, IconSize = 16, Color = Colors.accent, Soft = Colors.accentSoft, Square = true, Position = UDim2.new(0, 0, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5), Parent = head })
-	C.label({ Text = "Cách chơi", Font = Theme.FontDisplay, TextSize = 16, Size = UDim2.new(1, -100, 1, 0), Position = UDim2.fromOffset(40, 0), Parent = head })
+	C.label({ Text = "How to play", Font = Theme.FontDisplay, TextSize = 16, Size = UDim2.new(1, -100, 1, 0), Position = UDim2.fromOffset(40, 0), Parent = head })
 	local progress = C.pill({ Name = "Progress", Text = "0 / 5", TextSize = 11, Color = Colors.accentSoft, TextColor = Colors.accent, Height = 22, Position = UDim2.new(1, 0, 0.5, 0), AnchorPoint = Vector2.new(1, 0.5), Parent = head })
 	local STEPS = {
-		"Kéo đường từ CỔNG vào lưới",
-		"Xây nhà sát đường",
-		"Xây chỗ làm: văn phòng, hoặc shop + nhà máy",
-		"Thêm công viên, trường hoặc bệnh viện",
-		"Bấm BẮT ĐẦU",
+		"Drag a road from the GATE into the grid",
+		"Build homes next to the road",
+		"Add jobs: an office, or a shop + factory",
+		"Add a park, school or hospital",
+		"Press START",
 	}
 	local steps = {}
 	for i, text in ipairs(STEPS) do
@@ -11415,7 +11415,7 @@ function Overlays.eventsColumn(gui)
 		local label = C.label({ Text = text, Font = Theme.FontMedium, TextSize = 13, Wrapped = true, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, -30, 0, 0), Position = UDim2.fromOffset(30, 1), Parent = row })
 		steps[i] = { box = box, stroke = boxStroke, label = label, number = number, check = check }
 	end
-	C.label({ Text = "Lô gạch chéo có dấu ! là chưa nối đường về CỔNG: chưa có dân, chưa có doanh thu, vẫn tốn bảo trì.", TextSize = 12, Color = Colors.textMuted, Wrapped = true, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 10, Parent = guide })
+	C.label({ Text = "Striped lots with a ! aren't connected to the GATE: no residents, no revenue, but they still pay upkeep.", TextSize = 12, Color = Colors.textMuted, Wrapped = true, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 10, Parent = guide })
 
 	local slips = C.new("Frame", { Name = "Slips", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = 1, Parent = column })
 	C.list(Enum.FillDirection.Vertical, 8).Parent = slips
@@ -11482,7 +11482,7 @@ function Overlays.eventsColumn(gui)
 			slip(i, Colors.bad, title or text, sub)
 		end
 		for i, sc in ipairs(s.scenarios or {}) do
-			slip(10 + i, Colors.warn, string.format("Sự kiện: %s (còn %d tháng)", sc.name or sc.id, sc.monthsLeft or 0), sc.description)
+			slip(10 + i, Colors.warn, string.format("Event: %s (months left: %d)", sc.name or sc.id, sc.monthsLeft or 0), sc.description)
 		end
 	end
 	return obj
@@ -11663,7 +11663,7 @@ function Overlays.detailPanel(gui, ctx)
 	end
 
 	local function sizeText(def)
-		return def.size > 1 and string.format("%dx%d = %d ô", def.size, def.size, def.size * def.size) or "1 ô"
+		return def.size > 1 and string.format("%dx%d = %d tiles", def.size, def.size, def.size * def.size) or "1 tile"
 	end
 
 	local function renderVariant(s, id)
@@ -11673,27 +11673,27 @@ function Overlays.detailPanel(gui, ctx)
 		showPreview(id)
 		local price = s and CityEngine.priceOf(s, id) or def.price
 		local short = s ~= nil and s.budget < price
-		addRow(1, "Loại đất", string.format("%s (%s)", def.zone, def.code))
-		addRow(2, "Giá xây", short and string.format("%s, thiếu %s", Util.formatMoneyFull(price), Util.formatMoneyFull(price - s.budget)) or Util.formatMoneyFull(price), short and Colors.bad or nil)
-		addRow(3, "Diện tích", sizeText(def))
+		addRow(1, "Zone", string.format("%s (%s)", def.zone, def.code))
+		addRow(2, "Price", short and string.format("%s, short %s", Util.formatMoneyFull(price), Util.formatMoneyFull(price - s.budget)) or Util.formatMoneyFull(price), short and Colors.bad or nil)
+		addRow(3, "Size", sizeText(def))
 		if def.cap then
-			addRow(4, "Chỗ ở", string.format("%d người", def.cap))
+			addRow(4, "Housing", string.format("%d residents", def.cap))
 		end
 		if def.jobs then
-			addRow(5, "Chỗ làm", string.format("%d người", def.jobs))
+			addRow(5, "Jobs", string.format("%d workers", def.jobs))
 		end
 		if def.rev then
-			addRow(6, "Doanh thu", Util.formatMoneyFull(def.rev) .. " / người / tháng")
+			addRow(6, "Revenue", Util.formatMoneyFull(def.rev) .. " / worker / month")
 		end
 		if def.pts then
-			addRow(7, "Dịch vụ", string.format("+%d điểm, đủ cho %d dân", def.pts, def.pts * Config.FORMULA.residentsPerPoint))
+			addRow(7, "Services", string.format("+%d points, enough for %d residents", def.pts, def.pts * Config.FORMULA.residentsPerPoint))
 		end
-		addRow(8, "Bảo trì", Util.formatMoneyFull(def.maint) .. " / tháng")
-		addRow(9, "Phá dỡ hoàn", Util.formatMoneyFull(math.floor(def.price * Config.DEMOLISH_REFUND)))
+		addRow(8, "Upkeep", Util.formatMoneyFull(def.maint) .. " / month")
+		addRow(9, "Demolish refund", Util.formatMoneyFull(math.floor(def.price * Config.DEMOLISH_REFUND)))
 		addLine(10, Config.BUILDING_NOTES[id] or "", Colors.textDim)
 		local finished = s ~= nil and (s.status == "ENDED" or s.status == "FAILED")
 		action.Visible = true
-		action.Text = "CHỌN ĐỂ XÂY"
+		action.Text = "SELECT TO BUILD"
 		C.setButtonColor(action, Colors.accent)
 		action.TextColor3 = Colors.onAccent
 		C.setEnabled(action, not finished)
@@ -11710,35 +11710,35 @@ function Overlays.detailPanel(gui, ctx)
 			local col, row = CityLayout.cellXY(i)
 			swatch.BackgroundColor3 = Colors.panelAlt
 			swatchCode.Text = ""
-			title.Text = string.format("Ô trống (cột %d, hàng %d)", col, row)
-			addLine(1, "Chọn một loại đất ở bảng Xây dựng rồi bấm vào ô này để xây.", Colors.textDim)
+			title.Text = string.format("Empty tile (column %d, row %d)", col, row)
+			addLine(1, "Pick a zone in the Build panel, then click this tile to build.", Colors.textDim)
 			return
 		end
-		setHeader(kind, i == Config.GATE_INDEX and "Cổng thành phố" or (def.size > 1 and string.format("%s %dx%d", def.label, def.size, def.size) or def.label))
+		setHeader(kind, i == Config.GATE_INDEX and "City gate" or (def.size > 1 and string.format("%s %dx%d", def.label, def.size, def.size) or def.label))
 		local d = CityEngine.compute(s, s.population)
 		if d.conn[i] then
-			addStatus(1, kind == "road" and "Đã nối về CỔNG" or "Đang hoạt động (đã nối đường)", Colors.good)
+			addStatus(1, kind == "road" and "Connected to the GATE" or "Working (connected by road)", Colors.good)
 		else
-			addStatus(1, kind == "road" and "Chưa nối về CỔNG" or "Chưa nối đường về CỔNG", Colors.bad)
+			addStatus(1, kind == "road" and "Not connected to the GATE" or "No road to the GATE", Colors.bad)
 			if kind ~= "road" then
-				addLine(2, "Chưa có dân, chưa có doanh thu, vẫn tốn bảo trì.", Colors.bad)
+				addLine(2, "No residents, no revenue, still pays upkeep.", Colors.bad)
 			end
 		end
 		addLine(3, Config.BUILDING_NOTES[kind] or "", Colors.textDim)
 		if def.cap then
-			addRow(4, "Chỗ ở", string.format("%d người", def.cap))
+			addRow(4, "Housing", string.format("%d residents", def.cap))
 		elseif def.jobs and d.conn[i] then
 			local workers = Util.round(def.jobs * d.f)
 			local perMonth = (def.rev or 0) * def.jobs * d.f * (def.kind == "shop" and d.G or 1)
-			addRow(4, "Người làm", string.format("%d/%d", workers, def.jobs))
-			addRow(5, "Doanh thu", Util.formatMoneyFull(perMonth) .. "/tháng")
+			addRow(4, "Workers", string.format("%d/%d", workers, def.jobs))
+			addRow(5, "Revenue", Util.formatMoneyFull(perMonth) .. "/month")
 		end
-		addRow(6, "Bảo trì", Util.formatMoneyFull(def.maint) .. "/tháng", Colors.textDim)
+		addRow(6, "Upkeep", Util.formatMoneyFull(def.maint) .. "/month", Colors.textDim)
 		local finished = s.status == "ENDED" or s.status == "FAILED"
 		if i ~= Config.GATE_INDEX and not finished then
 			local refund = Util.formatMoneyFull(math.floor(def.price * Config.DEMOLISH_REFUND))
 			action.Visible = true
-			action.Text = armed and ("BẤM LẦN NỮA ĐỂ PHÁ (HOÀN " .. refund .. ")") or ("Phá dỡ, hoàn " .. refund)
+			action.Text = armed and ("PRESS AGAIN TO DEMOLISH (REFUND " .. refund .. ")") or ("Demolish, refund " .. refund)
 			C.setButtonColor(action, armed and Colors.danger or Colors.panelAlt)
 			action.TextColor3 = armed and Colors.onAccent or Colors.bad
 			C.setEnabled(action, true)
@@ -11929,7 +11929,7 @@ function Overlays.endScreen(gui, ctx)
 
 	local title = C.label({ Text = "", Font = Theme.FontDisplay, TextSize = 28, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(1, 0, 0, 34), LayoutOrder = 2, ZIndex = 46, Parent = card })
 	local reasonLabel = C.label({ Text = "", Font = Theme.FontMedium, TextSize = 13, Color = Colors.bad, XAlign = Enum.TextXAlignment.Center, Wrapped = true, AutomaticSize = Enum.AutomaticSize.Y, Size = UDim2.new(1, 0, 0, 0), LayoutOrder = 3, ZIndex = 46, Parent = card })
-	local recordPill = C.pill({ Name = "Record", Text = "Kỷ lục mới!", TextSize = 12, Color = Colors.goldSoft, TextColor = Colors.warn, Height = 26, LayoutOrder = 4, ZIndex = 46, Parent = card })
+	local recordPill = C.pill({ Name = "Record", Text = "New record!", TextSize = 12, Color = Colors.goldSoft, TextColor = Colors.warn, Height = 26, LayoutOrder = 4, ZIndex = 46, Parent = card })
 
 	-- lưới số liệu 3x2
 	local grid = C.new("Frame", { Name = "Table", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 132), LayoutOrder = 5, ZIndex = 46, Parent = card })
@@ -11939,7 +11939,7 @@ function Overlays.endScreen(gui, ctx)
 	gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	gridLayout.Parent = grid
 	local cellValues = {}
-	local LABELS = { { "THÁNG", "Tháng" }, { "ĐIỂM", "Điểm" }, { "KỶ LỤC", "Kỷ lục" }, { "DÂN SỐ", "Dân số" }, { "HẠNH PHÚC", "Hạnh phúc" }, { "NGÂN SÁCH", "Ngân sách" } }
+	local LABELS = { { "MONTHS", "Month" }, { "SCORE", "Score" }, { "RECORD", "Record" }, { "POPULATION", "Population" }, { "HAPPINESS", "Happiness" }, { "BUDGET", "Budget" } }
 	for k, l in ipairs(LABELS) do
 		local cell = C.well({ Name = "Cell_" .. l[1], Size = UDim2.fromOffset(100, 62), LayoutOrder = k, ZIndex = 46, Parent = grid })
 		C.label({ Text = l[2], Font = Theme.FontBold, TextSize = 11, Color = Colors.textDim, XAlign = Enum.TextXAlignment.Center, Size = UDim2.new(1, -12, 0, 14), Position = UDim2.fromOffset(6, 10), ZIndex = 47, Parent = cell })
@@ -11948,13 +11948,13 @@ function Overlays.endScreen(gui, ctx)
 
 	local buttons = C.new("Frame", { Name = "Buttons", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 44), LayoutOrder = 6, ZIndex = 46, Parent = card })
 	C.list(Enum.FillDirection.Horizontal, 8, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center).Parent = buttons
-	C.button({ Text = "CHƠI VÁN MỚI", Variant = "success", Font = Theme.FontDisplay, TextSize = 14, Size = UDim2.fromOffset(150, 44), LayoutOrder = 1, ZIndex = 46, Parent = buttons }, function()
+	C.button({ Text = "PLAY AGAIN", Variant = "success", Font = Theme.FontDisplay, TextSize = 14, Size = UDim2.fromOffset(150, 44), LayoutOrder = 1, ZIndex = 46, Parent = buttons }, function()
 		ctx.onNewGame()
 	end)
-	C.button({ Text = "Xem lịch sử", Variant = "secondary", Size = UDim2.fromOffset(130, 44), LayoutOrder = 2, ZIndex = 46, Parent = buttons }, function()
+	C.button({ Text = "View history", Variant = "secondary", Size = UDim2.fromOffset(130, 44), LayoutOrder = 2, ZIndex = 46, Parent = buttons }, function()
 		ctx.onHistory()
 	end)
-	C.button({ Text = "Ngắm thành phố", Variant = "white", Size = UDim2.fromOffset(140, 44), LayoutOrder = 3, ZIndex = 46, Parent = buttons }, function()
+	C.button({ Text = "View city", Variant = "white", Size = UDim2.fromOffset(140, 44), LayoutOrder = 3, ZIndex = 46, Parent = buttons }, function()
 		card.Visible = false
 	end)
 
@@ -11978,20 +11978,20 @@ function Overlays.endScreen(gui, ctx)
 		end
 		if (failed or ended) and shownFor ~= s.id then
 			shownFor = s.id
-			title.Text = ended and "Hoàn thành nhiệm kỳ!" or "Thành phố phá sản"
+			title.Text = ended and "Term complete!" or "City went bankrupt"
 			title.TextColor3 = ended and Colors.text or Colors.bad
-			reasonLabel.Text = failed and string.format("Ngân sách thâm hụt quá %s.", Util.formatMoneyFull(-Config.FAIL_BUDGET)) or ""
+			reasonLabel.Text = failed and string.format("The deficit went over %s.", Util.formatMoneyFull(-Config.FAIL_BUDGET)) or ""
 			reasonLabel.Visible = failed
 			local score = s.prosperityScore or 0
 			local best = (snap.profile and snap.profile.bestScore) or 0
-			cellValues["THÁNG"].Text = string.format("%d / %d", s.month, s.maxMonths)
-			cellValues["ĐIỂM"].Text = Util.formatInt(score)
-			cellValues["DÂN SỐ"].Text = Util.formatInt(s.population or 0)
-			cellValues["HẠNH PHÚC"].Text = tostring(Util.round(s.happiness))
-			cellValues["HẠNH PHÚC"].TextColor3 = Theme.happinessColor(s.happiness)
-			cellValues["NGÂN SÁCH"].Text = Util.formatMoneyFull(s.budget)
-			cellValues["NGÂN SÁCH"].TextColor3 = s.budget < 0 and Colors.bad or Colors.text
-			cellValues["KỶ LỤC"].Text = Util.formatInt(best)
+			cellValues["MONTHS"].Text = string.format("%d / %d", s.month, s.maxMonths)
+			cellValues["SCORE"].Text = Util.formatInt(score)
+			cellValues["POPULATION"].Text = Util.formatInt(s.population or 0)
+			cellValues["HAPPINESS"].Text = tostring(Util.round(s.happiness))
+			cellValues["HAPPINESS"].TextColor3 = Theme.happinessColor(s.happiness)
+			cellValues["BUDGET"].Text = Util.formatMoneyFull(s.budget)
+			cellValues["BUDGET"].TextColor3 = s.budget < 0 and Colors.bad or Colors.text
+			cellValues["RECORD"].Text = Util.formatInt(best)
 			-- kỷ lục mới khi điểm ván này chính là điểm cao nhất
 			recordPill.Visible = ended and score > 0 and score >= best
 			medalGradient.Color = ColorSequence.new({
@@ -11999,7 +11999,7 @@ function Overlays.endScreen(gui, ctx)
 				ColorSequenceKeypoint.new(1, ended and Colors.amber or Colors.dangerDark),
 			})
 			medalNumber.Text = tostring(s.month)
-			medalSub.Text = ended and "THÁNG" or "PHÁ SẢN"
+			medalSub.Text = ended and "MONTHS" or "BANKRUPT"
 			card.Visible = true
 			C.popIn(card, 0.85, 0.35)
 			if ended then
@@ -12115,18 +12115,18 @@ function Theme.happinessColor(h)
 end
 
 Theme.StatusText = {
-	ACTIVE = "Đang chạy",
-	PAUSED = "Tạm dừng",
-	ENDED = "Đã kết thúc",
-	FAILED = "Phá sản",
+	ACTIVE = "Running",
+	PAUSED = "Paused",
+	ENDED = "Ended",
+	FAILED = "Bankrupt",
 }
 
 -- chữ trên thanh điều khiển, viết kiểu câu như phần còn lại của UI
 Theme.StatusTitle = {
-	ACTIVE = "Đang chạy",
-	PAUSED = "Tạm dừng",
-	ENDED = "Đã kết thúc",
-	FAILED = "Phá sản",
+	ACTIVE = "Running",
+	PAUSED = "Paused",
+	ENDED = "Ended",
+	FAILED = "Bankrupt",
 }
 
 function Theme.statusColor(status)

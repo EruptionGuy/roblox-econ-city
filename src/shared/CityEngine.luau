@@ -245,7 +245,7 @@ end
 local function finished(session)
 	return session.status == "ENDED" or session.status == "FAILED"
 end
-local FINISHED_TEXT = "Ván đã kết thúc, hãy bắt đầu ván mới"
+local FINISHED_TEXT = "This game has ended, start a new one"
 
 function CityEngine.priceOf(session, kind)
 	return Util.round(B[kind].price * Scenarios.aggregate(session.scenarios).priceMultiplier)
@@ -256,24 +256,24 @@ function CityEngine.build(session, kind, index)
 		return false, FINISHED_TEXT
 	end
 	if type(kind) ~= "string" or not B[kind] then
-		return false, "Loại công trình không hợp lệ"
+		return false, "Invalid building type"
 	end
 	if not CityEngine.isValidIndex(index) then
-		return false, "Ô không hợp lệ"
+		return false, "Invalid tile"
 	end
 	local size = B[kind].size
 	local fp = CityEngine.footprint(index, size)
 	if not fp then
-		return false, string.format("%s cần %dx%d ô, tràn ra ngoài lưới", B[kind].label, size, size)
+		return false, string.format("%s: needs %dx%d tiles, goes off the grid", B[kind].label, size, size)
 	end
 	for _, c in ipairs(fp) do
 		if session.cells[c] ~= EMPTY then
-			return false, size > 1 and string.format("%s cần %dx%d ô trống", B[kind].label, size, size) or "Ô này đã có công trình"
+			return false, size > 1 and string.format("%s: needs %dx%d empty tiles", B[kind].label, size, size) or "This tile is already taken"
 		end
 	end
 	local cost = CityEngine.priceOf(session, kind)
 	if session.budget < cost then
-		return false, "Không đủ tiền: cần " .. Util.formatMoneyFull(cost)
+		return false, "Not enough money: need " .. Util.formatMoneyFull(cost)
 	end
 	session.budget = session.budget - cost
 	session.cells[index] = kind
@@ -289,21 +289,21 @@ function CityEngine.buildRoad(session, path)
 		return false, FINISHED_TEXT
 	end
 	if type(path) ~= "table" then
-		return false, "Đoạn đường không hợp lệ"
+		return false, "Invalid road path"
 	end
 	local n = #path
 	if n == 0 or n > Config.MAX_ROAD_PATH then
-		return false, string.format("Mỗi lần kéo tối đa %d ô", Config.MAX_ROAD_PATH)
+		return false, string.format("Max %d tiles per drag", Config.MAX_ROAD_PATH)
 	end
 	local todo, seen = {}, {}
 	for k = 1, n do
 		local i = path[k]
 		if not CityEngine.isValidIndex(i) then
-			return false, "Ô không hợp lệ"
+			return false, "Invalid tile"
 		end
 		if not seen[i] and session.cells[i] ~= "road" then
 			if session.cells[i] ~= EMPTY then
-				return false, "Đoạn đường đi qua ô đã có công trình"
+				return false, "The road crosses a tile with a building"
 			end
 			table.insert(todo, i)
 		end
@@ -311,7 +311,7 @@ function CityEngine.buildRoad(session, path)
 	end
 	local cost = #todo * CityEngine.priceOf(session, "road")
 	if session.budget < cost then
-		return false, string.format("Không đủ tiền: cần %s cho %d ô đường", Util.formatMoneyFull(cost), #todo)
+		return false, string.format("Not enough money: need %s (road tiles: %d)", Util.formatMoneyFull(cost), #todo)
 	end
 	session.budget = session.budget - cost
 	for _, i in ipairs(todo) do
@@ -325,16 +325,16 @@ function CityEngine.demolish(session, index)
 		return false, FINISHED_TEXT
 	end
 	if not CityEngine.isValidIndex(index) then
-		return false, "Ô trống"
+		return false, "Empty tile"
 	end
 	-- bấm ô nào của công trình nhiều ô cũng phá cả công trình
 	local anchor = CityEngine.anchorOf(session.cells, index)
 	local def = CityEngine.isValidIndex(anchor) and B[session.cells[anchor]]
 	if not def then
-		return false, "Ô trống"
+		return false, "Empty tile"
 	end
 	if anchor == Config.GATE_INDEX then
-		return false, "Không phá được ô cổng"
+		return false, "The gate can't be demolished"
 	end
 	local refund = math.floor(def.price * Config.DEMOLISH_REFUND)
 	session.budget = session.budget + refund
@@ -349,7 +349,7 @@ function CityEngine.setTax(session, tax)
 		return false, FINISHED_TEXT
 	end
 	if type(tax) ~= "number" or tax ~= math.floor(tax) or tax < 0 or tax > Config.TAX_MAX then
-		return false, string.format("Thuế từ 0 đến %d%%", Config.TAX_MAX)
+		return false, string.format("Tax must be 0 to %d%%", Config.TAX_MAX)
 	end
 	session.tax = tax
 	return true, { tax = tax }

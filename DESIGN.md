@@ -16,7 +16,7 @@ Tất cả nằm trong `Theme.Colors` (`src/client/UI/Theme.luau`).
 | Trạng thái | `good`, `warn`, `bad` | #1A9E55, #C47800, #E0364A |
 | Chỉ số | `gold` (ngân sách), `people` (dân số), `jobs` (việc làm), `mood` (dịch vụ) | #F5B301, #7C5CFF, #14A0C8, #F0507A |
 
-- Nút: `success` cho Bắt đầu / Chạy tiếp / Chơi ván mới, `amber` cho Tạm dừng, `accent` cho Chọn để xây và nút chính
+- Nút: `success` cho START / RESUME / PLAY AGAIN, `amber` cho PAUSE, `accent` cho SELECT TO BUILD và nút chính
   trong bảng, `danger` khi xác nhận phá dỡ, `violet` cho nút bot (chỉ có trong Studio).
 - Hạnh phúc lấy màu qua `Theme.happinessColor`: từ 65 trở lên xanh, 50 đến 64 cam, dưới 50 đỏ.
 - Nền nhạt sau biểu tượng = màu chính pha trắng khoảng 86%.
@@ -26,12 +26,12 @@ Tất cả nằm trong `Theme.Colors` (`src/client/UI/Theme.luau`).
 
 ## Chữ
 
-Chỉ dùng Builder Sans (font của Roblox, đủ dấu tiếng Việt): `Theme.Font`, `FontMedium`, `FontBold` cho nhãn và nút,
+Chỉ dùng Builder Sans (font của Roblox): `Theme.Font`, `FontMedium`, `FontBold` cho nhãn và nút,
 `FontDisplay` (ExtraBold) cho tiêu đề và số lớn.
 
 - Cỡ: tiêu đề thẻ 15-18, tiêu đề cửa sổ 21, tên game 20, số chỉ số 17-20, nội dung 12-14, nhãn 11-12.
-- Viết hoa chữ đầu câu như bình thường. Chỉ nút chính viết hoa toàn bộ (BẮT ĐẦU, TẠM DỪNG, CHẠY TIẾP, VÁN MỚI,
-  CHỌN ĐỂ XÂY, CHƠI VÁN MỚI) và chữ CỔNG trên bản đồ.
+- Viết hoa chữ đầu câu như bình thường. Chỉ nút chính viết hoa toàn bộ (START, PAUSE, RESUME, NEW GAME,
+  SELECT TO BUILD, PLAY AGAIN), chữ GATE trên bản đồ và mã loại đất (RES, COM, IND...).
 - Khi bật bố cục gọn, chữ tạo qua `C.label`, `C.button`, `C.textbox`, `C.pill` được nâng lên tối thiểu 13. Chữ mới nên
   tạo qua các hàm này.
 
@@ -39,16 +39,16 @@ Chỉ dùng Builder Sans (font của Roblox, đủ dấu tiếng Việt): `Theme
 
 Khung thiết kế 1366x768. `UIScale = min(rộng/1366, cao/768)`, kẹp trong 0,6-1,15 (máy cảm ứng 0,72-1,15).
 
-- Góc trên trái: thẻ thành phố tại (12, 10), cao 76, gồm logo 46x46, tên game, "Tháng m / 24" kèm thanh nhiệm kỳ và
-  bốn ô chỉ số 112x60. Nhãn vai trò / chế độ thử ở y = 94. Thẻ Cách chơi và cảnh báo rộng 300, bắt đầu từ y = 126.
-- Góc trên phải: thanh điều khiển cao 60 gồm ô trạng thái + đồng hồ, nút chính 136x44, Tick ngay (Studio), bốn nút
+- Góc trên trái: thẻ thành phố tại (12, 10), cao 76, gồm logo 46x46, tên game, "Month m / 24" kèm thanh nhiệm kỳ và
+  bốn ô chỉ số 112x60. Nhãn vai trò / chế độ thử ở y = 94. Thẻ How to play và cảnh báo rộng 300, bắt đầu từ y = 126.
+- Góc trên phải: thanh điều khiển cao 60 gồm ô trạng thái + đồng hồ, nút chính 136x44, Tick now (Studio), bốn nút
   điều hướng 64x44.
 - Bên phải: bảng Xây dựng rộng 340, cao tối đa 580, đặt tại y = 80 (`BuildPanel.TOP`).
-- Dưới trái: dải thống kê bốn thẻ 156x62, cách nhau 8. Dưới phải: nút camera tròn 42 và nút Đi dạo.
+- Dưới trái: dải thống kê bốn thẻ 156x62, cách nhau 8. Dưới phải: nút camera tròn 42 và nút Walk.
 - Giữa: thông báo rộng 440 tại y = 96. Cửa sổ mặc định 560x440, luôn thu vừa màn hình (chừa 24).
 
-Bố cục gọn bật khi rộng thiết kế < 1250 hoặc cao < 700: ẩn dải thống kê và Tick ngay, ô trạng thái chỉ còn đồng hồ,
-nhãn rút ngắn (Xếp hạng thành Hạng, Lớp học thành Lớp, Ẩn bảng / Xây dựng thành Xây), thẻ thành phố bỏ dòng phụ.
+Bố cục gọn bật khi rộng thiết kế < 1250 hoặc cao < 700: ẩn dải thống kê và Tick now, ô trạng thái chỉ còn đồng hồ,
+nhãn rút ngắn (Ranking thành Rank, Hide / Build thành Build), thẻ thành phố bỏ dòng phụ.
 
 ## Thành phần
 
@@ -61,8 +61,8 @@ nhãn rút ngắn (Xếp hạng thành Hạng, Lớp học thành Lớp, Ẩn b�
 - Bo góc: nút 12, thẻ 16-20, ô nền 12-16, viên nhãn và nút tròn bo hết (`C.round`).
 - Biểu tượng vẽ bằng Frame trong `Icons.luau` (đồng xu, người, cặp, mặt cười, tim, thùng hàng, biểu đồ, bục, lưới,
   dấu tích, chạy/dừng/tua, chú ý, thông tin, cúp, bot, bản đồ). Không dùng emoji, không dùng ảnh tải lên.
-- Màn kết thúc: huy chương ghi số tháng (vàng khi xong nhiệm kỳ, đỏ khi phá sản), nhãn "Kỷ lục mới!" khi bằng điểm cao
-  nhất, lưới 3x2 ô số, ba nút CHƠI VÁN MỚI / Xem lịch sử / Ngắm thành phố.
+- Màn kết thúc: huy chương ghi số tháng (vàng khi xong nhiệm kỳ, đỏ khi phá sản), nhãn "New record!" khi bằng điểm cao
+  nhất, lưới 3x2 ô số, ba nút PLAY AGAIN / View history / View city.
 - Phần trang trí (pháo giấy, viền đỏ khi phá sản) gắn thuộc tính `Decor = true` để không chặn bấm xuống bản đồ.
 - Hiệu ứng ngắn, không quá 0,4 s: số nhảy khi sang tháng, thẻ bật ra, pháo giấy khi bắt đầu và khi xong nhiệm kỳ.
 

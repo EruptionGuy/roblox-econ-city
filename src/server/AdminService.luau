@@ -60,11 +60,11 @@ function AdminService:_resolve(input)
 		input = tostring(math.floor(input))
 	end
 	if type(input) ~= "string" then
-		return nil, "Hãy nhập tên đăng nhập hoặc UserId"
+		return nil, "Enter a username or UserId"
 	end
 	input = input:gsub("^%s+", ""):gsub("%s+$", ""):gsub("^@", "")
 	if #input == 0 or #input > 40 then
-		return nil, "Hãy nhập tên đăng nhập hoặc UserId"
+		return nil, "Enter a username or UserId"
 	end
 	if input:match("^%d+$") then
 		local userId = tonumber(input)
@@ -78,14 +78,14 @@ function AdminService:_resolve(input)
 		return userId, name or ("#" .. input)
 	end
 	if not input:match("^[%w_]+$") then
-		return nil, "Tên đăng nhập chỉ gồm chữ, số và dấu _"
+		return nil, "Usernames only contain letters, numbers and _"
 	end
 	if not self.getUserIdFromName then
-		return nil, "Không tra được tên đăng nhập ở môi trường này"
+		return nil, "Usernames can't be looked up here"
 	end
 	local ok, userId = pcall(self.getUserIdFromName, input)
 	if not ok or type(userId) ~= "number" then
-		return nil, "Không tìm thấy người dùng Roblox tên \"" .. input .. "\""
+		return nil, "No Roblox user named \"" .. input .. "\""
 	end
 	return userId, input
 end
@@ -105,13 +105,13 @@ end
 
 function AdminService:getState(ownerId)
 	if not self.isOwner(ownerId) then
-		return false, "Chỉ chủ game mới dùng được bảng quản trị"
+		return false, "Only the game owner can use the admin panel"
 	end
 	local ok1, teachers = self.persistence:get(STORE, "teachers")
 	local ok2, bans = self.persistence:get(STORE, "bans")
 	local ok3, log = self.persistence:get(STORE, "log")
 	if not (ok1 and ok2 and ok3) then
-		return false, "Không tải được dữ liệu quản trị"
+		return false, "Couldn't load admin data"
 	end
 	return true, {
 		teachers = sortedList(teachers),
@@ -130,7 +130,7 @@ end
 
 function AdminService:addTeacher(ownerId, input)
 	if not self.isOwner(ownerId) then
-		return false, "Chỉ chủ game mới thêm được giáo viên"
+		return false, "Only the game owner can add teachers"
 	end
 	local userId, nameOrErr = self:_resolve(input)
 	if not userId then
@@ -142,7 +142,7 @@ function AdminService:addTeacher(ownerId, input)
 		return map
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	self:_log(ownerId, "addTeacher", nameOrErr .. " (" .. userId .. ")")
 	self:_teachersChanged()
@@ -151,11 +151,11 @@ end
 
 function AdminService:removeTeacher(ownerId, userId)
 	if not self.isOwner(ownerId) then
-		return false, "Chỉ chủ game mới bớt được giáo viên"
+		return false, "Only the game owner can remove teachers"
 	end
 	userId = tonumber(userId)
 	if not userId then
-		return false, "UserId không hợp lệ"
+		return false, "Invalid UserId"
 	end
 	local removed = false
 	local ok = self.persistence:update(STORE, "teachers", function(old)
@@ -168,10 +168,10 @@ function AdminService:removeTeacher(ownerId, userId)
 		return old
 	end)
 	if not ok then
-		return false, "Lỗi lưu trữ, hãy thử lại"
+		return false, "Storage error, please try again"
 	end
 	if not removed then
-		return false, "Người này không có trong danh sách giáo viên"
+		return false, "This person isn't on the teacher list"
 	end
 	self:_log(ownerId, "removeTeacher", tostring(userId))
 	self:_teachersChanged()
@@ -181,26 +181,26 @@ end
 -- days 0/nil = cấm vĩnh viễn
 function AdminService:ban(ownerId, input, days, reason)
 	if not self.isOwner(ownerId) then
-		return false, "Chỉ chủ game mới cấm được người chơi"
+		return false, "Only the game owner can ban players"
 	end
 	local userId, nameOrErr = self:_resolve(input)
 	if not userId then
 		return false, nameOrErr
 	end
 	if userId == ownerId then
-		return false, "Không thể tự cấm chính mình"
+		return false, "You can't ban yourself"
 	end
 	days = math.floor(tonumber(days) or 0)
 	if days < 0 or days > 3650 then
-		return false, "Số ngày không hợp lệ"
+		return false, "Invalid number of days"
 	end
-	reason = Util.cleanUserText(reason, 100, 300) or "Vi phạm nội quy lớp học"
+	reason = Util.cleanUserText(reason, 100, 300) or "Broke the class rules"
 	if not self.banUser then
-		return false, "Chức năng cấm chỉ chạy khi game đã publish"
+		return false, "Banning only works in a published game"
 	end
 	local ok, err = pcall(self.banUser, userId, days > 0 and days * 86400 or -1, reason)
 	if not ok then
-		return false, "Roblox từ chối lệnh cấm: " .. tostring(err)
+		return false, "Roblox rejected the ban: " .. tostring(err)
 	end
 	self.persistence:update(STORE, "bans", function(old)
 		local map = type(old) == "table" and old or {}
@@ -213,18 +213,18 @@ end
 
 function AdminService:unban(ownerId, userId)
 	if not self.isOwner(ownerId) then
-		return false, "Chỉ chủ game mới bỏ cấm được"
+		return false, "Only the game owner can unban"
 	end
 	userId = tonumber(userId)
 	if not userId then
-		return false, "UserId không hợp lệ"
+		return false, "Invalid UserId"
 	end
 	if not self.unbanUser then
-		return false, "Chức năng này chỉ chạy khi game đã publish"
+		return false, "This only works in a published game"
 	end
 	local ok, err = pcall(self.unbanUser, userId)
 	if not ok then
-		return false, "Roblox từ chối lệnh bỏ cấm: " .. tostring(err)
+		return false, "Roblox rejected the unban: " .. tostring(err)
 	end
 	self.persistence:update(STORE, "bans", function(old)
 		if type(old) ~= "table" or not old[tostring(userId)] then
@@ -240,23 +240,23 @@ end
 -- xoá hết data của 1 UserId (Roblox gửi yêu cầu Right to be Forgotten qua tin nhắn)
 function AdminService:deleteUserData(ownerId, input)
 	if not self.isOwner(ownerId) then
-		return false, "Chỉ chủ game mới xoá được dữ liệu"
+		return false, "Only the game owner can delete data"
 	end
 	local userId, nameOrErr = self:_resolve(input)
 	if not userId then
 		return false, nameOrErr
 	end
 	if self.isInServer and self.isInServer(userId) then
-		return false, "Người này đang ở trong server, hãy xoá sau khi họ rời game"
+		return false, "This person is on this server, delete their data after they leave"
 	end
 	local key = "u_" .. tostring(userId)
 	local okRead, profile = self.persistence:get(Config.DATASTORE.profiles, key)
 	if not okRead then
-		return false, "Không đọc được dữ liệu, hãy thử lại"
+		return false, "Couldn't read the data, please try again"
 	end
 	if type(profile) == "table" and type(profile.lock) == "table"
 		and (self.now() - (tonumber(profile.lock.at) or 0)) < Config.SESSION_LOCK_STALE_SECONDS then
-		return false, "Người này đang chơi ở server khác, thử lại sau vài phút"
+		return false, "This person is playing on another server, try again in a few minutes"
 	end
 	local report = { profile = profile ~= nil, classesLeft = 0, classesDeleted = 0 }
 	local classes = type(profile) == "table" and type(profile.classes) == "table" and profile.classes or {}
@@ -316,9 +316,9 @@ function AdminService:deleteUserData(ownerId, input)
 	-- 4. profile xoá cuối: bước trước lỗi thì chạy lại vẫn còn list lớp để dọn
 	local okRemove = self.persistence:remove(Config.DATASTORE.profiles, key)
 	if not okRemove then
-		return false, "Xoá hồ sơ thất bại, hãy chạy lại lệnh"
+		return false, "Deleting the profile failed, please run it again"
 	end
-	self:_log(ownerId, "deleteUserData", "(đã ẩn)")
+	self:_log(ownerId, "deleteUserData", "(hidden)")
 	self:_teachersChanged()
 	return true, report
 end

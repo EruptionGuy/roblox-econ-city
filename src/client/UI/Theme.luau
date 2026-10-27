@@ -100,18 +100,18 @@ function Theme.happinessColor(h)
 end
 
 Theme.StatusText = {
-	ACTIVE = "Đang chạy",
-	PAUSED = "Tạm dừng",
-	ENDED = "Đã kết thúc",
-	FAILED = "Phá sản",
+	ACTIVE = "Running",
+	PAUSED = "Paused",
+	ENDED = "Ended",
+	FAILED = "Bankrupt",
 }
 
 -- chữ trên thanh điều khiển, viết kiểu câu như phần còn lại của UI
 Theme.StatusTitle = {
-	ACTIVE = "Đang chạy",
-	PAUSED = "Tạm dừng",
-	ENDED = "Đã kết thúc",
-	FAILED = "Phá sản",
+	ACTIVE = "Running",
+	PAUSED = "Paused",
+	ENDED = "Ended",
+	FAILED = "Bankrupt",
 }
 
 function Theme.statusColor(status)
