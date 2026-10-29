@@ -1,130 +1,115 @@
 # Econ City (Roblox)
 
-Game học kinh tế cho học sinh. Mỗi em làm thị trưởng một thành phố 12x12 ô trong 24 tháng: xây nhà, shop, nhà máy,
-trường, bệnh viện, công viên, đường và tự đặt thuế. Dân chỉ đến khi có việc làm. Thuế cao quá thì dân bỏ đi và thu về
-lại ít hơn.
+An economic game for students. Each player acts as the mayor of a 12x12 tile city over 24 months: building houses, shops, factories, schools, hospitals, parks, and roads while setting their own tax rates. Citizens only move in if there are jobs available. If taxes are too high, citizens leave and tax revenue drops.
 
-Tài liệu khác:
+Other documentation:
 
-- [docs/huong-dan-choi.md](docs/huong-dan-choi.md): hướng dẫn chơi cho học sinh
-- [docs/luat-choi-moi.md](docs/luat-choi-moi.md): luật chơi và công thức
-- [PRODUCT.md](PRODUCT.md): game cho ai, để làm gì
-- [DESIGN.md](DESIGN.md): quy ước giao diện
+- [docs/huong-dan-choi.md](docs/huong-dan-choi.md): Student gameplay guide
+- [docs/luat-choi-moi.md](docs/luat-choi-moi.md): Game rules and formulas
+- [PRODUCT.md](PRODUCT.md): Target audience and game purpose
+- [DESIGN.md](DESIGN.md): UI guidelines
 
-## Chạy thử trong Studio
+## Testing in Studio
 
-1. Mở Roblox Studio, chọn File > Open from File > `EconCity.rbxlx`.
-2. Bấm Play (F5).
-3. Chọn công trình ở bảng Build bên phải rồi bấm vào ô trên bản đồ. Đường thì giữ chuột và kéo. Công trình nào
-   cũng phải có đường nối về ô GATE. Xây xong bấm START.
+1. Open Roblox Studio, select File > Open from File > `EconCity.rbxlx`.
+2. Press Play (F5).
+3. Select a building from the Build panel on the right, then click a tile on the map. To build roads, click and hold while dragging. Every building must have a road connection leading back to the GATE tile. Once you finish building, press START.
 
-Mỗi tháng dài 20 giây. Trong Studio có thêm hai nút để thử nhanh: "Tick now" (sang tháng luôn) và "Demo build bot"
-(bot tự xây bằng số tiền đang có).
+Each month lasts 20 seconds. In Studio, there are two extra buttons for quick testing: "Tick now" (immediately advances to the next month) and "Demo build bot" (an automated bot that builds using available funds).
 
-- Thử nhiều người chơi: Test > Clients and Servers, chọn 2 người, bấm Start.
-- Thử màn hình điện thoại: Test > Device.
+- Testing multiplayer: Go to Test > Clients and Servers, select 2 players, and click Start.
+- Testing mobile layout: Go to Test > Device.
 
-Khi game chưa publish, dữ liệu chỉ lưu tạm và mất khi tắt game (có dòng vàng "Test mode"). Nếu Studio đã được bật
-quyền API thì dữ liệu thử ghi vào kho có đuôi `_Studio`, không lẫn với dữ liệu thật của học sinh.
+When the game is unpublished, data is stored temporarily and lost when you close the game (look for the yellow "Test mode" message). If Studio has API access enabled, test data is saved to data stores with the `_Studio` suffix, keeping it separate from real student data.
 
-## Sửa code
+## Editing the Code
 
-Có thể sửa thẳng trong Studio, nhưng làm nhóm thì nên sửa file trong `src/` bằng VS Code và đồng bộ sang Studio bằng
-Rojo:
+You can edit files directly inside Studio, but for team development, it is recommended to edit files in `src/` using VS Code and synchronize them to Studio using Rojo:
 
-1. Cài Rojo (`brew install rojo`) và plugin Rojo trong Studio.
-2. Chạy `rojo serve` trong thư mục này, rồi bấm Connect ở plugin.
-3. Sửa file `.luau`, Studio tự cập nhật.
-4. Ghép lại file place: `rojo build -o EconCity.rbxlx`. Không có Rojo thì dùng
-   `python3 tools/build_rbxlx.py EconCity.rbxlx`.
+1. Install Rojo (`brew install rojo`) and the Rojo plugin in Studio.
+2. Run `rojo serve` in this directory, then click Connect in the plugin.
+3. Edit `.luau` files, and Studio will update automatically.
+4. Rebuild the place file: `rojo build -o EconCity.rbxlx`. If you don't have Rojo, use `python3 tools/build_rbxlx.py EconCity.rbxlx`.
 
-| Thư mục | Nằm ở đâu trong game | Có gì |
+| Directory | Location in Game | Description |
 |---|---|---|
-| `src/shared/` | ReplicatedStorage.EconCity | luật chơi và số liệu, server và client cùng dùng |
-| `src/server/` | ServerScriptService.EconCityServer | lưu dữ liệu, lớp học, xếp hạng, quản trị |
-| `src/client/` | StarterPlayerScripts.EconCityClient | giao diện, thành phố 3D, camera |
-| `tests/` | | test chạy ngoài Studio |
-| `prototypes/luat-moi/` | | bản JS của luật chơi, mở bằng trình duyệt |
+| `src/shared/` | ReplicatedStorage.EconCity | Game rules, data, shared by both server and client |
+| `src/server/` | ServerScriptService.EconCityServer | Data persistence, classrooms, leaderboards, administration |
+| `src/client/` | StarterPlayerScripts.EconCityClient | User interface, 3D city, camera |
+| `tests/` | | Tests running outside of Studio |
+| `prototypes/luat-moi/` | | JavaScript version of the game rules, viewable in a browser |
 
-Ba file hay sửa nhất:
+The three most frequently edited files:
 
-- `src/shared/Config.luau`: mọi con số (giá, bảo trì, chỗ làm, thời gian, giới hạn lớp...).
-- `src/shared/CityEngine.luau`: luật thành phố.
-- `src/shared/GameTick.luau`: những gì xảy ra mỗi tháng.
+- `src/shared/Config.luau`: All numbers (prices, maintenance costs, job capacities, time limits, class limits, etc.).
+- `src/shared/CityEngine.luau`: City mechanics and rules.
+- `src/shared/GameTick.luau`: Events that occur every month.
 
-## Test
+## Testing
 
-Cần Lua 5.3 trở lên (`brew install lua`):
+Requires Lua 5.3 or higher (`brew install lua`):
 
 ```
 sh tests/run_all.sh
 ```
 
-Lệnh này chạy test luật chơi, test server, một ván giả lập từ đầu đến cuối (cả chuột, cảm ứng, tay cầm) và bot cân
-bằng có so kết quả với bản JS.
+This command runs rule tests, server tests, a full simulation from start to finish (covering mouse, touch, and gamepad controls), and a balancing bot that compares its results against the JavaScript version.
 
-## Chỉnh cân bằng
+## Balance Tuning
 
-Số liệu nằm ở hai chỗ và phải giống nhau: `src/shared/Config.luau` và `prototypes/luat-moi/engine.js`.
+Balancing data exists in two places and must be kept identical: `src/shared/Config.luau` and `prototypes/luat-moi/engine.js`.
 
-1. Sửa con số ở cả hai file.
-2. Chạy `node prototypes/luat-moi/sim.js` để xem bảng điểm mới.
-3. Chạy `lua tests/balance_sim.lua --no-compare` để xem bảng của bản Luau.
-4. Thấy ổn thì chép bảng JS mới vào `STRATS` trong `tests/balance_sim.lua`, để lần sau test lại so được.
+1. Update the numbers in both files.
+2. Run `node prototypes/luat-moi/sim.js` to view the new score table.
+3. Run `lua tests/balance_sim.lua --no-compare` to view the Luau version's table.
+4. If everything looks good, copy the new JS table into `STRATS` in `tests/balance_sim.lua` so future tests can compare against it.
 
-Đổi độ dài một tháng (`TICK_SECONDS`) không ảnh hưởng cân bằng.
+Changing the length of a month (`TICK_SECONDS`) does not affect game balance.
 
-## Giáo viên
+## Teachers
 
-Chủ game (hoặc chủ Group sở hữu game) luôn là giáo viên kiêm quản trị. Thêm giáo viên khác bằng một trong ba cách:
+The game owner (or group owner) automatically acts as a teacher and administrator. Add other teachers using one of three methods:
 
-- Trong game: Class > Admin > Add teacher, nhập tên đăng nhập Roblox.
-- Thêm UserId vào `TEACHER_USER_IDS` hoặc `ADMIN_USER_IDS` trong `Config.luau`.
-- Đặt `TEACHER_GROUP_ID` và `TEACHER_GROUP_MIN_RANK`: ai trong Group từ cấp đó trở lên là giáo viên.
+- In-game: Class > Admin > Add teacher, then enter the Roblox username.
+- Add the UserId to `TEACHER_USER_IDS` or `ADMIN_USER_IDS` in `Config.luau`.
+- Set `TEACHER_GROUP_ID` and `TEACHER_GROUP_MIN_RANK`: anyone in the group at or above that rank becomes a teacher.
 
-Trong Studio ai cũng là giáo viên để dễ thử (`STUDIO_EVERYONE_IS_TEACHER`).
+In Studio, everyone acts as a teacher for easier testing (`STUDIO_EVERYONE_IS_TEACHER`).
 
-Game không hỏi email, mật khẩu hay tên thật. Giáo viên nhận ra học sinh qua tên hiển thị Roblox. Chat bị ẩn. Tên lớp
-và kịch bản đều đi qua bộ lọc chữ của Roblox.
+The game does not ask for emails, passwords, or real names. Teachers identify students by their Roblox display names. Chat is disabled. Class names and custom scenarios both pass through Roblox's text filter.
 
-## Đưa game lên Roblox
+## Publishing to Roblox
 
 1. File > Publish to Roblox.
-2. Game Settings > Permissions: để Private khi còn thử với lớp.
-3. Game Settings > Places > Max Players: ít nhất bằng sĩ số lớp + 1 (giáo viên). Tối đa 61, vì mỗi lớp tối đa 60 em.
-   Đặt thấp hơn thì phòng học riêng đầy, học sinh vào sau không vào được.
-4. Creator Dashboard: điền Maturity & Compliance Questionnaire.
-5. Muốn thử lưu dữ liệu thật trong Studio: Game Settings > Security > Enable Studio Access to API Services.
+2. Game Settings > Permissions: Set to Private while testing with your class.
+3. Game Settings > Places > Max Players: Set to at least class size + 1 (for the teacher). The maximum is 61, as each class holds up to 60 students. Setting it lower will fill up private classrooms, preventing late-joining students from entering.
+4. Creator Dashboard: Complete the Maturity & Compliance Questionnaire.
+5. To test real data saving in Studio: Game Settings > Security > Enable Studio Access to API Services.
 
-Phòng học riêng, lưu dữ liệu và xếp hạng giữa các server chỉ chạy sau khi publish.
+Private classrooms, data persistence, and cross-server leaderboards only function after the game is published.
 
-Trước khi cho học sinh chơi:
+Before letting students play:
 
-- Học sinh dưới 16 tuổi chỉ chơi được khi game vào chương trình Roblox Kids and Select. Tài khoản đăng game phải xác
-  minh tuổi và danh tính, bật xác thực 2 lớp, trả phí đăng (hoặc có Roblox Plus/Premium từ 2 tháng trở lên). Game
-  phải qua đánh giá an toàn: đủ 250 lượt chơi của người đã xác minh tuổi trong 60 ngày, hoặc trả 50.000 Robux để duyệt
-  nhanh (được hoàn lại). Trước đó chỉ người 16+ đã xác minh tuổi mới thấy game.
-- Ở Việt Nam, Roblox do VNG phát hành và chỉ chơi được game đã được cấp phép. Phải làm thủ tục với VNG trước.
+- Students under 16 can only play if the game is part of the Roblox Kids and Select program. The publishing account must verify age and identity, enable 2-step verification, and pay registration fees (or hold Roblox Plus/Premium for 2+ months). The game must pass safety reviews: receiving 250 plays from age-verified users within 60 days, or paying 50,000 Robux for expedited review (refundable). Until then, only age-verified users 16+ can see the game.
+- In Vietnam, Roblox is published by VNG and only officially licensed games are playable. You must complete regulatory procedures with VNG beforehand.
 
-## Xoá dữ liệu khi Roblox yêu cầu
+## Deleting Data upon Roblox Requests
 
-Roblox gửi yêu cầu xoá dữ liệu (Right to be Forgotten) kèm UserId. Vào Class > Admin > Delete all data, nhập UserId, bấm hai
-lần. Lệnh này xoá dữ liệu của người đó ở tất cả các kho sau:
+Roblox sends data deletion requests (Right to be Forgotten) accompanied by a UserId. Go to Class > Admin > Delete all data, enter the UserId, and press it twice. This command deletes that person's data across all data stores:
 
-| Kho | Key | Nội dung |
+| Data Store | Key | Content |
 |---|---|---|
-| `EconCity_Profiles_v1` | `u_<UserId>` | hồ sơ, ván đang chơi, lịch sử ván |
-| `EconCity_Classes_v1` | `c_<MÃ>` | thành viên lớp (`members["<UserId>"]`), giáo viên của lớp |
-| `EconCity_Scenarios_v1` | `t_<UserId>` | kịch bản giáo viên tự tạo |
-| `EconCity_Admin_v1` | `teachers`, `bans`, `log` | danh sách giáo viên, danh sách cấm, nhật ký |
-| `EconCity_LB_Global_v2`, `EconCity_LB_Class_v2_<MÃ>` (Ordered) | `<UserId>` | điểm xếp hạng |
-| `EconCity_LB_Global_v1`, `EconCity_LB_Class_v1_<MÃ>` (Ordered) | `<UserId>` | điểm xếp hạng luật cũ (không ghi nữa, vẫn xoá) |
-| MemoryStore `EconCity_ClassLive_v1` | `u_<UserId>` | tiến độ trực tiếp (tự hết hạn sau 2 phút) |
+| `EconCity_Profiles_v1` | `u_<UserId>` | Player profile, active game, game history |
+| `EconCity_Classes_v1` | `c_<CODE>` | Class members (`members["<UserId>"]`), class teachers |
+| `EconCity_Scenarios_v1` | `t_<UserId>` | Teacher-created custom scenarios |
+| `EconCity_Admin_v1` | `teachers`, `bans`, `log` | Teacher list, ban list, audit logs |
+| `EconCity_LB_Global_v2`, `EconCity_LB_Class_v2_<CODE>` (Ordered) | `<UserId>` | Leaderboard scores |
+| `EconCity_LB_Global_v1`, `EconCity_LB_Class_v1_<CODE>` (Ordered) | `<UserId>` | Legacy rule leaderboard scores (deprecated, still deleted) |
+| MemoryStore `EconCity_ClassLive_v1` | `u_<UserId>` | Live progress (auto-expires after 2 minutes) |
 
-## Chưa làm xong
+## Pending Work
 
-- Cân bằng mới thử bằng bot, chưa thử với học sinh thật.
-- Ván đang chơi dở theo luật cũ không chơi tiếp được, vào lại sẽ bắt đầu ván mới. Lịch sử ván cũ vẫn còn.
-- Phòng học riêng, MessagingService, MemoryStore, Ban API và tra tên đăng nhập mới chỉ thử bằng giả lập, chưa thử trên
-  game đã publish.
-- Chưa thử thành phố kín lưới trên điện thoại yếu.
+- New balancing has only been tested with bots, not yet with real students.
+- Ongoing games using legacy rules cannot be continued; re-entering will start a new game session. Legacy game histories remain accessible.
+- Private classrooms, MessagingService, MemoryStore, Ban API, and username lookup have only been tested via simulations, not yet on a published live game.
+- City grid performance on low-end mobile devices has not yet been fully optimized and tested.

@@ -1,263 +1,239 @@
-# Hướng dẫn chơi Econ City
+# Econ City How-To Play Guide
 
-## Econ City là gì
+## What is Econ City
 
-Bạn làm thị trưởng một thành phố trong 24 tháng. Việc của bạn là quy hoạch đất, xây công trình và đặt thuế sao cho dân
-có việc làm, sống vui và thành phố không hết tiền.
+You serve as the mayor of a city over a span of 24 months. Your job is to plan land use, construct buildings, and set tax rates so that citizens have jobs, live happily, and the city does not run out of money.
 
-- Khu đất của bạn là một lưới 12 x 12 ô, có sẵn một lối vào gọi là **CỔNG**.
-- Bạn bắt đầu với **$10,000** và thuế **20%**.
-- Mỗi tháng trôi qua trong 20 giây, nên một ván dài khoảng 8 phút. Bạn có thể tạm dừng bất cứ lúc nào.
-- Hết 24 tháng là **hoàn thành nhiệm kỳ**. Nếu ngân sách âm quá **$5,000** thì thành phố **phá sản** và ván kết thúc sớm.
+- Your plot of land is a 12 x 12 grid with a pre-existing entrance called the **GATE**.
+- You start with **$10,000** and a **20%** tax rate.
+- Each month lasts 20 seconds, making a full game approximately 8 minutes long. You can pause at any time.
+- Completing 24 months marks the **end of your term**. If your budget drops below **-$5,000**, the city goes **bankrupt** and the game ends early.
 
-Điểm cuối ván tính theo số người dân vừa có việc làm vừa hạnh phúc, cộng thêm tiền còn trong ngân sách. Chỉ xây thật
-nhiều nhà thì không được điểm cao.
+Your final score is calculated based on the number of citizens who are both employed and happy, plus any remaining funds in the budget. Simply building a large amount of housing will not yield a high score.
 
-## Màn hình chính
+## Main Screen Overview
 
-Mọi thứ bạn cần theo dõi nằm ở bốn góc màn hình, thành phố ở giữa.
+Everything you need to monitor is located in the four corners of the screen, with your city in the center.
 
-![Màn hình khi bắt đầu ván mới](img/man-hinh-chinh.jpg)
+![Screen at the start of a new game](img/man-hinh-chinh.jpg)
 
-*Màn hình lúc bắt đầu ván mới. Ảnh chụp khi chạy thử trong Roblox Studio, nên có thêm nút "Bot xây mẫu", "Tick ngay" và
-dòng chữ vàng mà khi chơi thật bạn sẽ không thấy.*
+*Main screen at the start of a new game. Image taken during a test run in Roblox Studio, which includes extra buttons like "Demo build bot", "Tick now", and yellow text that you will not see during actual gameplay.*
 
-| Vị trí | Thành phần | Dùng để |
+| Location | Component | Description |
 | --- | --- | --- |
-| Trên trái | Thẻ thành phố | Xem tháng hiện tại (ví dụ Tháng 7 / 24) và bốn chỉ số: Ngân sách, Dân số, Việc làm, Hạnh phúc |
-| Trên trái, bên dưới | Thẻ Cách chơi và cảnh báo | Làm theo 5 bước đầu tiên; đọc cảnh báo khi thành phố gặp vấn đề |
-| Trên phải | Nút chính | BẮT ĐẦU, TẠM DỪNG, CHẠY TIẾP; hết ván thì thành VÁN MỚI |
-| Trên phải | Lịch sử, Xếp hạng, Lớp học, Xây dựng | Mở biểu đồ các tháng, bảng điểm, vào lớp của giáo viên, ẩn/hiện bảng Xây dựng |
-| Bên phải | Bảng Xây dựng | Chọn loại đất và mẫu công trình, bấm **i** để xem số liệu, kéo thanh Thuế |
-| Dưới trái | Dải thống kê | Muốn đến, Chỗ làm có người, Dịch vụ, Hàng cho shop |
-| Dưới phải | Nút + và −, nút Đi dạo | Phóng to, thu nhỏ; đi bộ trong thành phố bằng WASD hoặc cần điều khiển |
+| Top Left | City Card | View the current month (e.g., Month 7 / 24) and four key metrics: Budget, Population, Jobs, Happiness |
+| Top Left, Below | How to Play & Alerts Card | Follow the first 5 steps; read warning alerts when the city encounters issues |
+| Top Right | Main Buttons | START, PAUSE, RESUME; changes to NEW GAME when the match ends |
+| Top Right | History, Leaderboard, Class, Build | Open monthly charts, scoreboards, join a teacher's class, or toggle the Build panel |
+| Right Side | Build Panel | Select land categories and building templates, click **i** for details, adjust the Tax slider |
+| Bottom Left | Stats Bar | Incoming Population, Occupied Jobs, Services, Goods for Shops |
+| Bottom Right | + and − Buttons, Walk Button | Zoom in/out; explore your city on foot using WASD or joystick controls |
 
-Khi đi dạo bạn vẫn xây được: chọn mẫu rồi bấm vào ô. Trên điện thoại, vuốt là xoay camera, chạm nhẹ mới là xây.
+You can still build while walking: select a template and click on a tile. On mobile devices, swiping rotates the camera, while a soft tap places a building.
 
-## 5 bước đầu tiên
+## First 5 Steps
 
-Ván mới luôn bắt đầu ở trạng thái tạm dừng, nên bạn cứ xây xong rồi mới bấm BẮT ĐẦU. Thẻ Cách chơi sẽ đánh dấu từng
-bước khi bạn làm xong.
+A new game always starts in a paused state, allowing you to build before clicking START. The How to Play card will mark off each step as you complete it.
 
-1. **Kéo đường từ CỔNG vào lưới.** Chọn ô **GT** (Giao thông), giữ chuột ở ô CỔNG rồi kéo vào trong. Mỗi ô đường giá
-   $50, mỗi lần kéo tối đa 24 ô.
-2. **Xây nhà sát đường.** Chọn **Ở** (Đất ở), chọn mẫu **Nhà** rồi bấm vào một ô trống cạnh đường.
-3. **Xây chỗ làm.** Văn phòng chạy một mình được. Shop thì phải có nhà máy đi kèm để có hàng bán.
-4. **Thêm công viên, trường hoặc bệnh viện** để dân vui.
-5. **Bấm BẮT ĐẦU.** Thời gian bắt đầu chạy và dân dần chuyển đến.
+1. **Drag roads from the GATE into the grid.** Select the **GT** (Transit) tile, click and hold on the GATE tile, then drag inward. Each road tile costs $50, with a maximum of 24 tiles per drag.
+2. **Build houses adjacent to roads.** Select **RES** (Residential land), pick the **House** template, and click an empty tile next to a road.
+3. **Build workplaces.** Office buildings function independently. Shops require an accompanying factory to supply goods for sale.
+4. **Add parks, schools, or hospitals** to keep citizens happy.
+5. **Click START.** Time will begin running, and citizens will gradually move in.
 
-Mọi công trình phải nằm cạnh một ô đường nối liền về CỔNG thì mới hoạt động. Công trình chưa nối đường hiện gạch sọc và
-dấu **!** đỏ, không có dân, không có doanh thu nhưng vẫn tốn tiền bảo trì.
+All buildings must be adjacent to a road tile connected back to the GATE to function. Unconnected buildings display red diagonal stripes and an **!** icon, generate no residents or revenue, but still incur maintenance costs.
 
-**Gợi ý xây đầu ván** (vừa đủ $10,000):
+**Recommended starting layout** (fits within the $10,000 budget):
 
-| Xây | Số lượng | Giá | Được gì |
+| Building | Quantity | Cost | Output / Capacity |
 | --- | --- | --- | --- |
-| Đường | khoảng 5 ô | $250 | Nối mọi thứ về CỔNG |
-| Nhà | 2 | $1,200 | 80 chỗ ở |
-| Văn phòng | 1 | $3,000 | 20 chỗ làm |
-| Shop | 1 | $1,600 | 20 chỗ làm |
-| Nhà máy | 1 | $1,200 | 30 chỗ làm, đủ hàng cho shop |
-| Công viên | 1 | $1,800 | Phục vụ 100 dân |
-| **Tổng** | | **$9,050** | Còn lại $950 |
+| Road | ~5 tiles | $250 | Connects everything to GATE |
+| House | 2 | $1,200 | 80 housing capacity |
+| Office | 1 | $3,000 | 20 job capacity |
+| Shop | 1 | $1,600 | 20 job capacity |
+| Factory | 1 | $1,200 | 30 job capacity, supplies goods for shop |
+| Park | 1 | $1,800 | Serves 100 residents |
+| **Total** | | **$9,050** | Remaining budget: $950 |
 
-Với cách xây này, sau vài tháng thành phố có khoảng 80 dân và bắt đầu có lãi. Sau đó bạn dùng tiền lãi để mở rộng dần.
+With this setup, the city will reach around 80 residents after a few months and begin generating a profit. You can then use net income to gradually expand.
 
-## Các loại công trình
+## Building Types
 
-Có 8 loại đất, mỗi loại một màu và một mã trên bảng Xây dựng. Nhà cho chỗ ở, shop/nhà máy/văn phòng cho việc làm và
-doanh thu, y tế/giáo dục/cây xanh làm dân vui.
+There are 8 land types, each represented by a color and a code on the Build panel. Housing provides living space, shops/factories/offices provide jobs and revenue, while health, education, and greenery keep citizens happy.
 
-| Loại đất | Mẫu | Kích thước | Giá xây | Bảo trì/tháng | Cho thành phố |
+| Land Type | Template | Size | Build Cost | Maint./Month | City Contribution |
 | --- | --- | --- | --- | --- | --- |
-| Ở - Đất ở | Nhà | 1 ô | $600 | $10 | 40 chỗ ở |
-| Ở - Đất ở | Nhà nhỏ | 1 ô | $350 | $6 | 20 chỗ ở |
-| Ở - Đất ở | Chung cư | 2x2 | $3,000 | $60 | 200 chỗ ở |
-| TM - Thương mại | Shop | 1 ô | $1,600 | $60 | 20 chỗ làm, $105/người, cần hàng |
-| TM - Thương mại | Quán cà phê | 1 ô | $900 | $35 | 10 chỗ làm, $100/người, cần hàng |
-| TM - Thương mại | Siêu thị | 2x2 | $7,000 | $260 | 90 chỗ làm, $110/người, cần hàng |
-| CN - Công nghiệp | Nhà máy | 1 ô | $1,200 | $80 | 30 chỗ làm, $55/người |
-| CN - Công nghiệp | Xưởng nhỏ | 1 ô | $700 | $45 | 15 chỗ làm, $55/người |
-| CN - Công nghiệp | Nhà máy lớn | 2x2 | $5,000 | $320 | 130 chỗ làm, $58/người |
-| VP - Văn phòng | Văn phòng | 1 ô | $3,000 | $100 | 20 chỗ làm, $160/người |
-| VP - Văn phòng | Văn phòng nhỏ | 1 ô | $1,500 | $55 | 10 chỗ làm, $155/người |
-| VP - Văn phòng | Tháp văn phòng | 2x2 | $14,000 | $420 | 90 chỗ làm, $170/người |
-| YT - Y tế | Bệnh viện | 1 ô | $2,400 | $120 | 10 điểm dịch vụ, 20 chỗ làm |
-| YT - Y tế | Trạm y tế | 1 ô | $1,200 | $60 | 5 điểm dịch vụ, 8 chỗ làm |
-| GD - Giáo dục | Trường học | 1 ô | $2,000 | $100 | 10 điểm dịch vụ, 20 chỗ làm |
-| GD - Giáo dục | Trường lớn | 2x2 | $7,000 | $350 | 40 điểm dịch vụ, 80 chỗ làm |
-| CX - Cây xanh | Công viên | 1 ô | $1,800 | $100 | 5 điểm dịch vụ |
-| CX - Cây xanh | Công viên lớn | 2x2 | $6,000 | $360 | 22 điểm dịch vụ |
-| GT - Giao thông | Đường | 1 ô | $50 | $0 | Nối công trình về CỔNG |
+| RES - Residential | House | 1x1 | $600 | $10 | 40 housing spaces |
+| RES - Residential | Small House | 1x1 | $350 | $6 | 20 housing spaces |
+| RES - Residential | Apartment | 2x2 | $3,000 | $60 | 200 housing spaces |
+| COM - Commercial | Shop | 1x1 | $1,600 | $60 | 20 jobs, $105/worker, requires goods |
+| COM - Commercial | Cafe | 1x1 | $900 | $35 | 10 jobs, $100/worker, requires goods |
+| COM - Commercial | Supermarket | 2x2 | $7,000 | $260 | 90 jobs, $110/worker, requires goods |
+| IND - Industrial | Factory | 1x1 | $1,200 | $80 | 30 jobs, $55/worker |
+| IND - Industrial | Small Workshop | 1x1 | $700 | $45 | 15 jobs, $55/worker |
+| IND - Industrial | Large Factory | 2x2 | $5,000 | $320 | 130 jobs, $58/worker |
+| OFF - Office | Office | 1x1 | $3,000 | $100 | 20 jobs, $160/worker |
+| OFF - Office | Small Office | 1x1 | $1,500 | $55 | 10 jobs, $155/worker |
+| OFF - Office | Office Tower | 2x2 | $14,000 | $420 | 90 jobs, $170/worker |
+| HEA - Healthcare | Hospital | 1x1 | $2,400 | $120 | 10 service points, 20 jobs |
+| HEA - Healthcare | Clinic | 1x1 | $1,200 | $60 | 5 service points, 8 jobs |
+| EDU - Education | School | 1x1 | $2,000 | $100 | 10 service points, 20 jobs |
+| EDU - Education | Large School | 2x2 | $7,000 | $350 | 40 service points, 80 jobs |
+| PRK - Greenery | Park | 1x1 | $1,800 | $100 | 5 service points |
+| PRK - Greenery | Large Park | 2x2 | $6,000 | $360 | 22 service points |
+| TRN - Transit | Road | 1x1 | $50 | $0 | Connects buildings to GATE |
 
-"$105/người" là doanh thu mỗi người làm tạo ra trong một tháng. Thành phố thu thuế trên khoản doanh thu này. Mỗi điểm
-dịch vụ đủ phục vụ 20 dân.
+"$105/worker" represents the monthly revenue generated per employed worker. The city collects taxes on this revenue. Each service point satisfies up to 20 residents.
 
-- **Shop** bán được nhiều nhưng cần hàng. Mỗi người làm ở nhà máy làm ra hàng cho một người bán ở shop.
-- **Nhà máy** rẻ, nhiều chỗ làm nhưng doanh thu mỗi người thấp.
-- **Văn phòng** đắt nhưng doanh thu mỗi người cao nhất, không phụ thuộc ai. Rất có lợi khi lưới gần đầy.
-- **Bệnh viện, trường học** vừa làm dân vui vừa tạo việc làm. **Công viên** không cần người làm.
-- **Mẫu nhỏ** rẻ, hợp lúc ít tiền. **Mẫu 2x2** đắt, lãi mỗi ô cao hơn, hợp giữa và cuối ván khi đã dư tiền và lưới bắt
-  đầu chật.
-- Mẫu 2x2 đặt bằng ô góc trên bên trái, cả 4 ô phải trống và nằm trọn trong lưới.
-- **Phá dỡ** được hoàn lại 50% giá xây. Dùng công cụ **PD**, hoặc bấm vào công trình rồi bấm nút Phá dỡ hai lần. Phá
-  đường có thể làm công trình khác mất nối.
+- **Shops** generate high revenue but require goods. Every factory worker produces enough stock to supply one shop retail worker.
+- **Factories** are inexpensive and offer many jobs, but revenue per worker is lower.
+- **Offices** are expensive, but yield the highest revenue per worker without dependencies. Very useful when grid space becomes limited.
+- **Hospitals and schools** boost happiness while creating employment. **Parks** do not require staff.
+- **Small templates** are cheap and suitable for low-budget starts. **2x2 templates** are costly but yield higher profit per tile, ideal for mid-to-late game when money is abundant and space is tight.
+- 2x2 templates are anchored by their top-left tile; all 4 tiles must be empty and within grid boundaries.
+- **Demolition** refunds 50% of the construction cost. Use the **DEM** tool, or select a building and press the Demolish button twice. Demolishing roads may disconnect adjacent structures.
 
-Bấm nút **i** cạnh mỗi mẫu để xem đủ số liệu trước khi xây.
+Click the **i** button next to any template to inspect its metrics before building.
 
-## Mỗi tháng diễn ra gì
+## Monthly Calculations
 
-Dân chỉ chuyển đến khi có việc làm và thành phố đủ vui. Mỗi tháng game tính theo thứ tự sau:
+Citizens only move in if jobs are available and the city maintains sufficient happiness. Each month, calculations run in the following sequence:
 
-1. **Dân đến hoặc đi.** Số dân muốn đến bằng số chỗ làm nhân với độ hấp dẫn, nhưng không vượt quá số chỗ ở. Mỗi tháng
-   dân số đi được nửa quãng tới con số đó.
-2. **Dân đi làm.** Dân nhiều hơn chỗ làm thì có người thất nghiệp. Chỉ số Việc làm là phần trăm dân có việc.
-3. **Doanh nghiệp có doanh thu.** Shop chỉ bán được phần có hàng từ nhà máy.
-4. **Thành phố thu thuế và trả bảo trì.** Tiền thuế = doanh thu x thuế suất. Bảo trì tính cho mọi công trình, kể cả
-   công trình chưa nối đường.
-5. **Tính hạnh phúc** từ việc làm, thuế và dịch vụ. Con số này quyết định dân đến hay đi ở tháng sau.
+1. **Population influx or exit.** Desired incoming population equals total job capacity multiplied by city attractiveness, capped by available housing. Population adjusts halfway toward this target each month.
+2. **Workforce allocation.** If population exceeds available jobs, unemployment occurs. Employment rate reflects the percentage of employed citizens.
+3. **Business revenue generation.** Shops only earn revenue up to the quantity of stock supplied by factories.
+4. **Tax collection & maintenance payments.** Tax Revenue = Total Business Revenue x Tax Rate. Maintenance costs apply to all structures, including unconnected ones.
+5. **Happiness score updates** based on employment rates, tax burden, and service coverage. This score determines population movement for the following month.
 
-![Mỗi tháng là một vòng: dân đến, đi làm, nộp thuế, bạn xây thêm](img/vong-moi-thang.png)
+![Each month is a cycle: citizens move in, work, pay taxes, and you build more](img/vong-moi-thang.png)
 
-Bạn đứng ở ô "Bạn xây thêm": mỗi lần xây hay đổi thuế đều quay vòng lại, ảnh hưởng tới số dân tháng sau.
+You stand at the "You build more" phase: every construction action or tax adjustment feeds back into the loop, impacting population in subsequent months.
 
-**Độ hấp dẫn** phụ thuộc hạnh phúc của tháng trước:
+**City Attractiveness** depends on the previous month's happiness rating:
 
-| Hạnh phúc tháng trước | Số dân muốn đến |
+| Previous Month Happiness | Desired Population Growth |
 | --- | --- |
-| Dưới 50 | Không ai đến |
-| Từ 50 đến 75 | Tăng dần theo hạnh phúc |
-| Từ 75 trở lên | Tối đa, bằng 1,2 lần số chỗ làm |
+| Below 50 | No incoming residents |
+| 50 to 75 | Gradually increases based on happiness |
+| 75 and above | Maximum capacity, equal to 1.2x total job slots |
 
-Thành phố rất vui sẽ có người đến nhiều hơn số chỗ làm. Khi đó có người thất nghiệp và hạnh phúc giảm xuống, nên thành
-phố tự cân bằng.
+Highly happy cities attract more residents than available jobs. This leads to unemployment, which lowers happiness, causing the city to self-regulate.
 
-**Hạnh phúc** (từ 0 đến 100) được tính như sau:
+**Happiness** (scale of 0 to 100) is calculated as follows:
 
 ```
 H = 0.35E + 0.45(100 - 2T) + 0.20S
 ```
 
-- E là phần trăm dân có việc làm.
-- T là thuế suất (%). Thuế càng cao, hạnh phúc càng thấp.
-- S là phần trăm dân được phục vụ dịch vụ. Mỗi điểm dịch vụ phục vụ 20 dân.
+- E represents employment rate (%).
+- T represents tax rate (%). Higher taxes decrease happiness.
+- S represents service coverage rate (%). Each service point covers 20 citizens.
 
-Ví dụ: thành phố có 400 dân, 1 bệnh viện và 1 công viên. Hai công trình đó cho 15 điểm, phục vụ 300 người, nên S = 75.
-Với E = 100 và thuế 20%, hạnh phúc là 35 + 27 + 15 = 77.
+Example: A city has 400 citizens, 1 hospital, and 1 park. These structures provide 15 service points, covering 300 residents (S = 75%). With E = 100% and T = 20%, happiness equals 35 + 27 + 15 = 77.
 
-## Thuế
+## Taxation
 
-Thuế khoảng 30% thường cho kết quả tốt nhất. Thuế thấp quá thì thiếu tiền để xây. Thuế cao quá thì dân bỏ đi và tiền
-thuế thu về lại ít hơn.
+A tax rate around 30% generally yields optimal results. Excessively low taxes lead to funding shortages for construction. Excessively high taxes drive citizens away, reducing net revenue.
 
-- Kéo thanh **Thuế** ở cuối bảng Xây dựng, từ 0% đến 50%. Đổi lúc nào cũng được, có tác dụng từ tháng sau.
-- Dòng "Mỗi tháng: thu thuế ..., bảo trì ..." dưới thanh thuế cho biết thành phố đang lãi hay lỗ.
+- Adjust the **Tax** slider at the bottom of the Build panel between 0% and 50%. Changes take effect starting the next month.
+- The indicator reading "Monthly: tax income ..., maintenance ..." below the slider reflects net profit or loss.
 
-Bảng dưới cho thấy thuế làm hạnh phúc và số dân muốn đến thay đổi ra sao. Ví dụ này giả sử ai cũng có việc (E = 100) và
-dịch vụ phục vụ 75% dân (S = 75).
+The table below illustrates how tax rates impact happiness and incoming population interest. This scenario assumes full employment (E = 100) and 75% service coverage (S = 75).
 
-| Thuế | Hạnh phúc | Dân muốn đến, so với số chỗ làm |
+| Tax Rate | Happiness | Desired Population relative to Job Slots |
 | --- | --- | --- |
 | 20% | 77 | 120% |
 | 30% | 68 | 86% |
 | 40% | 59 | 43% |
-| 50% | 50 | 0%, không ai đến |
+| 50% | 50 | 0% (No new residents) |
 
-Tăng thuế từ 30% lên 40% thì mỗi người nộp nhiều hơn. Nhưng số người muốn đến giảm còn một nửa, nên tổng tiền thuế lại
-giảm. Trong kinh tế học, hiện tượng này gọi là **đường cong Laffer**.
+Raising taxes from 30% to 40% increases individual tax contributions, but cuts prospective resident interest in half, resulting in lower total tax collection. In economics, this dynamic is known as the **Laffer Curve**.
 
-![Thuế khoảng 30% cho điểm cao nhất; thấp quá hay cao quá đều mất điểm](img/diem-theo-thue.png)
+![Taxes around 30% yield the highest score; too low or too high reduces performance](img/diem-theo-thue.png)
 
-*Điểm của bot chơi thử theo luật của game, chiến thuật cân bằng, 7 mức thuế.*
+*Test bot scores under game rules using a balanced strategy across 7 tax levels.*
 
-Bạn có thể tự kiểm tra: chơi hai ván với hai mức thuế khác nhau, rồi so biểu đồ trong Lịch sử.
+You can test this yourself: run two separate games using different tax rates, then compare their performance graphs in the History tab.
 
-## Kết thúc ván và điểm số
+## Game Completion & Scoring
 
-Ván kết thúc khi hết 24 tháng ("Hoàn thành nhiệm kỳ!") hoặc khi ngân sách âm quá $5,000 ("Thành phố phá sản"). Ngân
-sách được phép âm một chút, nhưng lúc âm thì bạn không xây được gì.
+A game concludes after 24 months ("Term Complete!") or if your budget falls below -$5,000 ("City Bankrupt"). Minor budget deficits are tolerated, but construction is disabled while negative.
 
-**Điểm** được tính như sau, làm tròn và không nhỏ hơn 0:
+**Score** is calculated as follows, rounded to the nearest integer (minimum 0):
 
 ```
-Điểm = số dân có việc x hạnh phúc / 100 + ngân sách / 100
+Score = (Employed Population x Happiness / 100) + (Budget / 100)
 ```
 
-Ví dụ: cuối ván có 70 người có việc, hạnh phúc 78, ngân sách $24,876. Điểm = 70 x 78 / 100 + 24,876 / 100 = 54,6 +
-248,76, làm tròn là 303.
+Example: Ending a game with 70 employed citizens, 78 happiness, and a $24,876 budget yields a score of (70 x 78 / 100) + (24,876 / 100) = 54.6 + 248.76 = 303.36, rounding to 303.
 
-Dân thất nghiệp không được tính điểm. Vì vậy xây thật nhiều nhà mà không có chỗ làm thì không giúp ích.
+Unemployed citizens contribute nothing to the final score. Building excess housing without providing corresponding jobs offers no benefit.
 
-- **Màn kết thúc** hiện điểm, kỷ lục và các chỉ số cuối ván. Bạn chọn CHƠI VÁN MỚI, Xem lịch sử hoặc Ngắm thành phố.
-  Bằng hoặc vượt điểm cao nhất cũ sẽ hiện "Kỷ lục mới!".
-- **Lịch sử** vẽ biểu đồ từng tháng cho ngân sách, doanh thu của doanh nghiệp, hạnh phúc, tỉ lệ việc làm và dân số. Xem
-  nó để biết tháng nào thành phố đi xuống và vì sao.
-- **Xếp hạng** có hai tab: Toàn cầu và Lớp của tôi. Mỗi người giữ điểm cao nhất của mình, bảng cập nhật sau mỗi 2 lượt.
+- **Summary Screen** displays final score, records, and performance metrics. You can select NEW GAME, View History, or Explore City. Matching or surpassing your previous high score triggers a "New Record!" banner.
+- **History** plots monthly trends for budget, business revenue, happiness, employment rate, and population. Use it to analyze downturns and identify root causes.
+- **Leaderboards** feature two tabs: Global and My Class. High scores are saved individually and update every 2 turns.
 
-## Chơi theo lớp học
+## Classroom Integration
 
-Giáo viên sẽ đưa cho bạn một mã mời gồm 6 ký tự. Vào lớp bằng mã đó để giáo viên theo dõi được thành phố của bạn.
+Teachers provide a 6-character invitation code. Joining a class allows your teacher to monitor city development.
 
-1. Bấm **Lớp học** ở góc trên bên phải.
-2. Ở mục **Tham gia lớp**, nhập mã mời (ví dụ QZ7K2M) rồi bấm **Tham gia**.
-3. Lớp hiện trong mục **Lớp của tôi**, kèm tên giáo viên.
-4. Nếu giáo viên mở phòng học riêng, bấm **Vào phòng học** để chơi cùng cả lớp.
+1. Click **Class** in the top right corner.
+2. In the **Join Class** section, enter the invitation code (e.g., QZ7K2M) and click **Join**.
+3. The class will appear under **My Class**, displaying the teacher's name.
+4. If your teacher hosts a private server, click **Enter Classroom** to play alongside classmates.
 
-Sau khi vào lớp, tab Lớp của tôi trong Xếp hạng sẽ so điểm của bạn với các bạn cùng lớp. Muốn rời lớp thì bấm
-**Rời lớp**.
+Once enrolled, the My Class leaderboard tab ranks your performance against peers. Click **Leave Class** to unenroll.
 
-Giáo viên có thể gán **sự kiện** cho cả lớp. Khi có sự kiện, màn hình hiện tên sự kiện và số tháng còn lại.
+Teachers can assign **events** to the entire class. Active events display their name and remaining duration on screen.
 
-| Sự kiện | Ảnh hưởng | Kéo dài |
+| Event | Impact | Duration |
 | --- | --- | --- |
-| Suy thoái kinh tế | Doanh thu chỉ còn 70% | 4 tháng |
-| Đứt gãy chuỗi cung ứng | Nhà máy chỉ làm ra một nửa hàng | 4 tháng |
-| Đại dịch | Mỗi tháng 2% dân bỏ đi, hạnh phúc giảm 10 | 6 tháng |
-| Bão giá vật liệu | Giá xây tăng 50%, bảo trì tăng 30% | 5 tháng |
+| Economic Recession | Revenue dropped to 70% | 4 months |
+| Supply Chain Disruption | Factories produce half goods | 4 months |
+| Pandemic | 2% monthly population drop, happiness reduced by 10 | 6 months |
+| Material Inflation | Building costs +50%, maintenance +30% | 5 months |
 
-Giáo viên còn có thể tự tạo kịch bản khác với mức ảnh hưởng riêng.
+Teachers can also construct custom scenarios with custom parameters.
 
-## Mẹo chơi và lỗi thường gặp
+## Tips and Common Issues
 
-Khi thành phố gặp vấn đề, game hiện cảnh báo ở góc trên bên trái. Cảnh báo không làm bạn thua ngay, nhưng nên xử lý
-sớm.
+When city issues arise, warning alerts appear in the top left corner. Alerts do not cause immediate failure, but should be addressed promptly.
 
-| Cảnh báo | Nên làm gì |
+| Alert | Recommended Action |
 | --- | --- |
-| Ngân sách âm: đang lỗ, chưa xây được gì | Tăng thuế một chút, hoặc phá công trình chưa dùng tới (được hoàn 50%) |
-| Hạnh phúc dưới 50: không ai muốn chuyển đến | Giảm thuế, thêm công viên, trường hoặc bệnh viện |
-| Việc làm dưới 80%: thiếu chỗ làm | Xây thêm văn phòng, shop hoặc nhà máy, tạm ngừng xây nhà |
-| Shop thiếu hàng: cần thêm nhà máy | Xây thêm nhà máy hoặc xưởng nhỏ |
+| Negative Budget: Deficit active, construction disabled | Raise taxes slightly or demolish unused structures (50% refund) |
+| Happiness below 50: Influx stopped | Lower taxes, add parks, schools, or hospitals |
+| Employment below 80%: Job shortage | Build offices, shops, or factories; pause residential construction |
+| Shop Stock Shortage: Needs more factories | Build additional factories or small workshops |
 
-Nếu bấm xây mà không được, đọc thông báo đỏ hiện ra:
+If building placement fails, review the red notification popup:
 
-| Thông báo | Lý do |
+| Notification | Cause |
 | --- | --- |
-| Không đủ tiền: cần ... | Ngân sách ít hơn giá xây. Chờ thêm vài tháng hoặc chọn mẫu nhỏ |
-| Ô này đã có công trình | Chọn ô trống khác, hoặc phá công trình cũ trước |
-| Chung cư cần 2x2 ô trống | Mẫu 2x2 cần đủ 4 ô trống, tính từ ô góc trên bên trái |
-| ... tràn ra ngoài lưới | Mẫu 2x2 đặt quá sát mép phải hoặc mép dưới |
-| Đoạn đường đi qua ô đã có công trình | Đường kéo cắt ngang một công trình, nên cả đoạn không được xây |
-| Mỗi lần kéo tối đa 24 ô | Chia đoạn đường dài thành nhiều lần kéo |
+| Not enough money: Need ... | Construction cost exceeds budget. Wait a few months or select smaller templates |
+| This tile is occupied | Choose an empty tile or demolish existing structures first |
+| Apartment requires a 2x2 empty space | 2x2 structures require 4 open tiles relative to top-left anchor |
+| ... extends beyond the grid boundary | 2x2 template placed too close to right or bottom edges |
+| Road drag path crosses occupied tiles | Road path intersects an existing building, invalidating the drag |
+| Maximum drag length is 24 tiles | Break long road lines into multiple segments |
 
-**Mẹo:**
+**Strategy Tips:**
 
-- Xây chỗ làm trước rồi mới xây thêm nhà. Dân đến vì có việc, không phải vì có nhà.
-- Giữ số chỗ làm ở nhà máy ít nhất bằng số chỗ làm ở shop. Mục "Hàng cho shop" ở dải thống kê nên ở 100%.
-- Cứ 100 dân cần 5 điểm dịch vụ. Một công viên đủ cho 100 dân, một bệnh viện hoặc trường học đủ cho 200 dân.
-- Bấm TẠM DỪNG khi cần suy nghĩ. Lúc tạm dừng bạn vẫn xây được.
-- Để dành mẫu 2x2 cho giữa và cuối ván. Mua sớm dễ hết tiền xây chỗ làm.
-- Chỉ xây shop mà không xây nhà máy sẽ phá sản, vì shop không có hàng để bán.
+- Build job sites prior to expanding housing. Citizens move in for employment, not residential space alone.
+- Maintain industrial job capacity equal to or greater than retail job capacity. Keep "Goods for Shops" on the stats bar at 100%.
+- Provide 5 service points per 100 residents. One park supports 100 residents, while a hospital or school supports 200.
+- Use PAUSE to plan layouts. Construction remains active while paused.
+- Reserve 2x2 templates for mid-to-late game. Early purchases risk draining funds needed for initial job placement.
+- Constructing shops without factories leads to bankruptcy due to inventory deficits.
 
-## Câu hỏi sau khi chơi
+## Post-Game Discussion Questions
 
-Sau mỗi ván, hãy mở Lịch sử và trả lời các câu hỏi dưới đây. Đây là những bài học kinh tế mà game muốn bạn tự rút ra.
+After completing a match, open your History tab and evaluate the following economic concepts:
 
-1. Vì sao xây thêm nhà mà dân số không tăng? Thứ gì mới thật sự kéo dân đến?
-2. Khi bạn tăng thuế, tiền thuế mỗi tháng thay đổi thế nào trong 2-3 tháng sau đó? Có lúc nào tăng thuế mà thu về ít
-   hơn không?
-3. Bệnh viện, trường học và công viên không tạo doanh thu. Vậy vì sao thành phố vẫn nên xây chúng?
-4. Vì sao shop cần nhà máy? Ngoài đời, hàng hóa trong cửa hàng đến từ đâu?
-5. Khi gặp một sự kiện như suy thoái hay đại dịch, chỉ số nào thay đổi trước? Bạn đã làm gì để thành phố vượt qua?
-6. Văn phòng đắt gần gấp đôi shop. Khi nào xây văn phòng có lợi hơn?
-7. Nếu được chơi lại, bạn sẽ đổi điều gì đầu tiên, và vì sao?
+1. Why does adding residential housing fail to increase population on its own? What actually drives growth?
+2. When you raise tax rates, how does monthly tax collection react over the subsequent 2–3 months? Are there scenarios where higher tax rates yield lower total revenue?
+3. Hospitals, schools, and parks generate no direct revenue. Why is it still essential for a city to build them?
+4. Why do shops rely on factories? Where do commercial goods originate in real-world supply chains?
+5. During economic shocks like recessions or pandemics, which metrics drop first? What strategies help stabilize the city?
+6. Offices cost nearly twice as much as basic shops. Under what circumstances does investing in office towers become advantageous?
+7. If replaying the same scenario, what initial strategic adjustments would you implement, and why?
